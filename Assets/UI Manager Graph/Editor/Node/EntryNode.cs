@@ -1,9 +1,9 @@
 ﻿using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 
-namespace Com.Github.Knose1.UiManagerGraph.Node
+namespace Com.Github.Knose1.Flow.Node
 {
-	public class EntryNode : UIManagerGraphNode
+	public class EntryNode : FlowGraphNode
 	{
 		protected const string ENTRY = "Entry";
 

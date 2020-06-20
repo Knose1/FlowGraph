@@ -8,8 +8,12 @@ using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace Com.Github.Knose1.UiManagerGraph {
-	public abstract class UIManagerGraphNode : UnityEditor.Experimental.GraphView.Node
+namespace Com.Github.Knose1.Flow {
+
+	/// <summary>
+	/// Base Node class for <see cref="FlowGraph"/>
+	/// </summary>
+	public abstract class FlowGraphNode : UnityEditor.Experimental.GraphView.Node
 	{
 		protected const string NEXT = "Next";
 		protected const string OUTPUT = "Output";
@@ -21,8 +25,8 @@ namespace Com.Github.Knose1.UiManagerGraph {
 
 		protected VisualElement inspectorElement;
 
-		protected UIManagerGraphNode() : this(new Vector2(100, 150)) { }
-		protected UIManagerGraphNode(Vector2 startSize) : base()
+		protected FlowGraphNode() : this(new Vector2(100, 150)) { }
+		protected FlowGraphNode(Vector2 startSize) : base()
 		{
 			SetPosition(new Rect(Vector2.zero, startSize));
 			GUID = Guid.NewGuid().ToString();

@@ -4,20 +4,20 @@ using UnityEngine.UIElements;
 using UnityEditor.UIElements;
 using System;
 
-namespace Com.Github.Knose1.UiManagerGraph.Node {
-	public class ScreenNode : UIManagerGraphNode
+namespace Com.Github.Knose1.Flow.Node {
+	public class StateNode : FlowGraphNode
 	{
-		protected const string SCREEN = "Screen";
+		protected const string STATE = "State";
 
 		private TextField nameField;
 		public string ScreenName => nameField.value;
 
-		public ScreenNode() : base()
+		public StateNode() : base()
 		{
-			title = SCREEN;
+			title = STATE;
 			
 			nameField = new TextField("Name");
-			nameField.value = SCREEN;
+			nameField.value = STATE;
 			nameField.labelElement.style.minWidth = 30;
 			nameField.labelElement.style.unityTextAlign = TextAnchor.MiddleLeft;
 			nameField.style.width = 125;

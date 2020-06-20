@@ -1,11 +1,11 @@
 ﻿using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 
-namespace Com.Github.Knose1.UiManagerGraph.Node
+namespace Com.Github.Knose1.Flow.Node
 {
-	public class ExitNode : UIManagerGraphNode
+	public class ExitNode : FlowGraphNode
 	{
-		protected const string EXIT = "Exit Game";
+		protected const string EXIT = "Exit";
 
 		public ExitNode() : base()
 		{

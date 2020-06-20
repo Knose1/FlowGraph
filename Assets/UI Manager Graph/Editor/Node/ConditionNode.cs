@@ -1,8 +1,8 @@
 ﻿using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 
-namespace Com.Github.Knose1.UiManagerGraph.Node {
-	public class ConditionNode : UIManagerGraphNode
+namespace Com.Github.Knose1.Flow.Node {
+	public class ConditionNode : FlowGraphNode
 	{
 		protected const string CONDITION = "Condition";
 		protected const string IF = "If";
