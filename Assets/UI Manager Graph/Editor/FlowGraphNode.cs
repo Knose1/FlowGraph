@@ -8,7 +8,8 @@ using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace Com.Github.Knose1.Flow {
+namespace Com.Github.Knose1.Flow.Editor
+{
 
 	/// <summary>
 	/// Base Node class for <see cref="FlowGraph"/>
@@ -24,6 +25,12 @@ namespace Com.Github.Knose1.Flow {
 		public bool entryPoint;
 
 		protected VisualElement inspectorElement;
+		protected List<Port> _ports = new List<Port>();
+
+		/// <summary>
+		/// Node's ports
+		/// </summary>
+		public List<Port> Ports => _ports;
 
 		protected FlowGraphNode() : this(new Vector2(100, 150)) { }
 		protected FlowGraphNode(Vector2 startSize) : base()
@@ -45,12 +52,16 @@ namespace Com.Github.Knose1.Flow {
 
 		protected Port GeneratePort(Direction direction, Port.Capacity capacity = Port.Capacity.Single)
 		{
-			return InstantiatePort(Orientation.Horizontal, direction, capacity, null);
+			Port port = InstantiatePort(Orientation.Horizontal, direction, capacity, null);
+			_ports.Add(port);
+			return port;
 		}
 
 		protected Port GeneratePort<T>(Direction direction, Port.Capacity capacity = Port.Capacity.Single)
 		{
-			return InstantiatePort(Orientation.Horizontal, direction, capacity, typeof(T));
+			Port port = InstantiatePort(Orientation.Horizontal, direction, capacity, typeof(T));
+			_ports.Add(port);
+			return port;
 		}
 
 		protected void AddOutputElement(VisualElement elm)

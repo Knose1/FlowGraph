@@ -1,11 +1,12 @@
-﻿using Com.Github.Knose1.Flow.Node;
+﻿using Com.Github.Knose1.Flow.Editor.Node;
 using System;
 using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace Com.Github.Knose1.Flow {
+namespace Com.Github.Knose1.Flow.Editor
+{
 
 	public class FlowWindow : EditorWindow {
 
@@ -27,10 +28,11 @@ namespace Com.Github.Knose1.Flow {
 			manager = new FlowGraphManager();
 
 			manager.OnSelectionStatusChange += Manager_OnSelectionStatusChange;
-			manager.Init();
 
 			GenerateGraph();
 			GenerateToolbar();
+
+			manager.Init();
 		}
 
 		private void Manager_OnSelectionStatusChange(FlowGraphManager.Status status)
@@ -61,13 +63,32 @@ namespace Com.Github.Knose1.Flow {
 		protected virtual void GenerateToolbar()
 		{
 			Toolbar toolbar = new Toolbar();
+			toolbar.StretchToParentWidth();
 
 			//Screen Node
-			Button createScreenNode = new Button(CreateStateNode);
+			ToolbarButton createScreenNode = new ToolbarButton(CreateStateNode);
 			createScreenNode.text = "+State Node";
 			toolbar.Add(createScreenNode);
+
+			//Save
+			VisualElement middle = new VisualElement();
+			middle.name = "Middle";
+			toolbar.Add(middle);
+
+			middle.style.flexGrow = 1;
+
+			//Save
+			ToolbarButton save = new ToolbarButton(Save);
+			save.text = "Save";
+			toolbar.Add(save);
+
 			
 			rootVisualElement.Add(toolbar);
+		}
+
+		protected void Save()
+		{
+			graph.SaveIn(manager.Target);
 		}
 
 		#region Create
@@ -84,6 +105,7 @@ namespace Com.Github.Knose1.Flow {
 		
 		public void OnDisable()
 		{
+			graph.Dispose();
 			rootVisualElement.Remove(graph);
 			manager.Dispose();
 		}

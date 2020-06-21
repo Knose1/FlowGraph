@@ -1,7 +1,8 @@
-﻿using System;
+﻿using Com.Github.Knose1.Flow.Engine.Settings;
+using System;
 using UnityEditor;
 
-namespace Com.Github.Knose1.Flow
+namespace Com.Github.Knose1.Flow.Editor
 {
 	public class FlowGraphManager : IDisposable
 	{
@@ -14,6 +15,9 @@ namespace Com.Github.Knose1.Flow
 
 		public event Action OnDataChange;
 		public event Action<Status> OnSelectionStatusChange;
+
+		protected FlowGraphScriptable _target;
+		public FlowGraphScriptable Target => _target;
 
 		public void Init()
 		{
@@ -29,8 +33,10 @@ namespace Com.Github.Knose1.Flow
 
 		private void Selection_SelectionChanged()
 		{
+			_target = null;
+
 			int length = Selection.assetGUIDs.Length;
-			if (length > 0)
+			if (length > 1)
 			{
 				OnSelectionStatusChange?.Invoke(Status.MultipleEdit);
 				OnDataChange?.Invoke();
@@ -44,12 +50,14 @@ namespace Com.Github.Knose1.Flow
 			}
 
 			UnityEngine.Object obj = AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(AssetDatabase.GUIDToAssetPath(Selection.assetGUIDs[0]));
-			if (!(obj is /*To complete*/))
+			if (!(obj is FlowGraphScriptable))
 			{
 				OnSelectionStatusChange?.Invoke(Status.NotSelected);
 				OnDataChange?.Invoke();
 				return;
 			}
+
+			_target = obj as FlowGraphScriptable;
 
 			OnSelectionStatusChange?.Invoke(Status.NoProblem);
 

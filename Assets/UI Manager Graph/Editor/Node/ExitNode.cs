@@ -1,7 +1,7 @@
 ﻿using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 
-namespace Com.Github.Knose1.Flow.Node
+namespace Com.Github.Knose1.Flow.Editor.Node
 {
 	public class ExitNode : FlowGraphNode
 	{

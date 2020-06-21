@@ -4,13 +4,17 @@ using UnityEngine.UIElements;
 using UnityEditor.UIElements;
 using System;
 
-namespace Com.Github.Knose1.Flow.Node {
+namespace Com.Github.Knose1.Flow.Editor.Node {
 	public class StateNode : FlowGraphNode
 	{
 		protected const string STATE = "State";
 
 		private TextField nameField;
-		public string ScreenName => nameField.value;
+		public string StateName
+		{
+			get => nameField.value;
+			set => nameField.value = value;
+		}
 
 		public StateNode() : base()
 		{
