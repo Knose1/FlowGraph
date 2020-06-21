@@ -1,10 +1,7 @@
-﻿using System;
-using System.Collections;
+﻿using Com.Github.Knose1.Flow.Engine.Settings.NodeData;
+using System;
 using System.Collections.Generic;
-using System.Linq;
-using UnityEditor;
 using UnityEditor.Experimental.GraphView;
-using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -48,6 +45,7 @@ namespace Com.Github.Knose1.Flow.Editor
 
 			RefreshExpandedState();
 			RefreshPorts();
+
 		}
 
 		protected Port GeneratePort(Direction direction, Port.Capacity capacity = Port.Capacity.Single)
@@ -83,6 +81,9 @@ namespace Com.Github.Knose1.Flow.Editor
 			inspectorElement.style.paddingTop = 3;
 			inspectorElement.style.paddingBottom = 3;
 		}
+
+		public abstract NodeData Serialize();
+
 	}
 
 	public static class UIManagerGraphNodeExtend

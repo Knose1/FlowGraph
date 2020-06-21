@@ -12,5 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 514937b7f687f3b4996934d27f571918, type: 3}
   m_Name: FlowGraphScriptable
   m_EditorClassIdentifier: 
-  nodes: []
+  entryNode: []
+  exitNode: []
+  stateNodes: []
+  conditionNodes: []
   connections: []

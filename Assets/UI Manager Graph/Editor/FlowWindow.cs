@@ -1,5 +1,4 @@
 ﻿using Com.Github.Knose1.Flow.Editor.Node;
-using System;
 using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
@@ -8,7 +7,8 @@ using UnityEngine.UIElements;
 namespace Com.Github.Knose1.Flow.Editor
 {
 
-	public class FlowWindow : EditorWindow {
+	public class FlowWindow : EditorWindow
+	{
 
 		private const string MULTIPLE_EDIT_NOT_SUPPORTED = "Can't Edit Multiple objects";
 		private const string ASSTET_NOT_SELECTED = "Can't Edit Multiple objects";
@@ -82,7 +82,7 @@ namespace Com.Github.Knose1.Flow.Editor
 			save.text = "Save";
 			toolbar.Add(save);
 
-			
+
 			rootVisualElement.Add(toolbar);
 		}
 
@@ -92,17 +92,17 @@ namespace Com.Github.Knose1.Flow.Editor
 		}
 
 		#region Create
-		void CreateStateNode() 
-		{ 
-			graph.CreateNode(new StateNode()); 
+		void CreateStateNode()
+		{
+			graph.CreateNode(new StateNode());
 		}
 
-		void CreateConditionNode() 
-		{ 
-			graph.CreateNode(new ConditionNode()); 
+		void CreateConditionNode()
+		{
+			graph.CreateNode(new ConditionNode());
 		}
 		#endregion
-		
+
 		public void OnDisable()
 		{
 			graph.Dispose();

@@ -42,7 +42,7 @@ namespace Com.Github.Knose1.Flow.Editor
 				OnDataChange?.Invoke();
 				return;
 			}
-			if (length == 0) 
+			if (length == 0)
 			{
 				OnSelectionStatusChange?.Invoke(Status.NotSelected);
 				OnDataChange?.Invoke();

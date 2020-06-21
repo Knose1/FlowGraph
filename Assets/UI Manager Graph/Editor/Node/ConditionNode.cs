@@ -1,7 +1,9 @@
-﻿using UnityEditor.Experimental.GraphView;
+﻿using Com.Github.Knose1.Flow.Engine.Settings.NodeData;
+using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 
-namespace Com.Github.Knose1.Flow.Editor.Node {
+namespace Com.Github.Knose1.Flow.Editor.Node
+{
 	public class ConditionNode : FlowGraphNode
 	{
 		protected const string CONDITION = "Condition";
@@ -19,7 +21,7 @@ namespace Com.Github.Knose1.Flow.Editor.Node {
 			Port output = GeneratePort(Direction.Output, Port.Capacity.Single);
 			output.SetPortName(IF);
 			AddOutputElement(output);
-			
+
 			Port @else = GeneratePort(Direction.Output, Port.Capacity.Single);
 			@else.SetPortName(ELSE);
 			AddOutputElement(@else);
@@ -33,6 +35,12 @@ namespace Com.Github.Knose1.Flow.Editor.Node {
 
 			RefreshExpandedState();
 			RefreshPorts();
+		}
+
+
+		public override NodeData Serialize()
+		{
+			return new ConditionNodeData(GetPosition().position);
 		}
 	}
 }

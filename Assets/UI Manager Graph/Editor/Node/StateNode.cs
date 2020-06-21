@@ -1,10 +1,10 @@
-﻿using UnityEditor.Experimental.GraphView;
+﻿using Com.Github.Knose1.Flow.Engine.Settings.NodeData;
+using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 using UnityEngine.UIElements;
-using UnityEditor.UIElements;
-using System;
 
-namespace Com.Github.Knose1.Flow.Editor.Node {
+namespace Com.Github.Knose1.Flow.Editor.Node
+{
 	public class StateNode : FlowGraphNode
 	{
 		protected const string STATE = "State";
@@ -13,15 +13,13 @@ namespace Com.Github.Knose1.Flow.Editor.Node {
 		public string StateName
 		{
 			get => nameField.value;
-			set => nameField.value = value;
+			set => title = nameField.value = value;
 		}
 
 		public StateNode() : base()
 		{
-			title = STATE;
-			
 			nameField = new TextField("Name");
-			nameField.value = STATE;
+			StateName = STATE;
 			nameField.labelElement.style.minWidth = 30;
 			nameField.labelElement.style.unityTextAlign = TextAnchor.MiddleLeft;
 			nameField.style.width = 125;
@@ -51,6 +49,11 @@ namespace Com.Github.Knose1.Flow.Editor.Node {
 		private void OnNameFieldChange(ChangeEvent<string> evt)
 		{
 			title = evt.newValue;
+		}
+
+		public override NodeData Serialize()
+		{
+			return new StateNodeData(GetPosition().position, StateName);
 		}
 	}
 }

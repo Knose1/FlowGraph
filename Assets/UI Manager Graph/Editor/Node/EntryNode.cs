@@ -1,4 +1,5 @@
-﻿using UnityEditor.Experimental.GraphView;
+﻿using Com.Github.Knose1.Flow.Engine.Settings.NodeData;
+using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 
 namespace Com.Github.Knose1.Flow.Editor.Node
@@ -23,6 +24,11 @@ namespace Com.Github.Knose1.Flow.Editor.Node
 
 			RefreshExpandedState();
 			RefreshPorts();
+		}
+
+		public override NodeData Serialize()
+		{
+			return new EntryNodeData(GetPosition().position);
 		}
 	}
 }

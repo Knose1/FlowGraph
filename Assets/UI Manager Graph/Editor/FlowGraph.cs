@@ -2,13 +2,10 @@
 using Com.Github.Knose1.Flow.Engine.Settings;
 using Com.Github.Knose1.Flow.Engine.Settings.NodeData;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEditor;
 using UnityEditor.Experimental.GraphView;
 using UnityEngine;
-using UnityEngine.UI;
 using UnityEngine.UIElements;
 
 namespace Com.Github.Knose1.Flow.Editor
@@ -88,32 +85,48 @@ namespace Com.Github.Knose1.Flow.Editor
 
 		}
 
+		/*//////////////////////////////////////*/
+		/*                                      */
+		/*               Methods                */
+		/*                                      */
+		/*//////////////////////////////////////*/
+
+		/// <summary>
+		/// Save the graph in a <see cref="FlowGraphScriptable"/>
+		/// </summary>
+		/// <param name="target"></param>
 		public void SaveIn(FlowGraphScriptable target)
 		{
+			List<UnityEditor.Experimental.GraphView.Node> nodes = this.nodes.ToList();
+
+			//Empty override the save
 			target.EmptyNodes();
 			target.connections = new List<ConnectorData>();
 
 			List<TempDataAndVisualLinkage> tempDataAndVisualLinkage = new List<TempDataAndVisualLinkage>();
 
-			for (int i = 0; i < graphNodes.Count; i++)
+			///Save nodes
+			for (int i = graphNodes.Count - 1; i >= 0; i--)
 			{
 				FlowGraphNode graphNode = graphNodes[i];
+
+				//Check if the node is on the canvas
+				if (!nodes.Contains(graphNode))
+				{
+					graphNodes.Remove(graphNode);
+					continue;
+				}
+
 				NodeData nodeData = null;
 
-				Vector2 position = graphNode.GetPosition().position;
+				nodeData = graphNode.Serialize();
 
-					 if (graphNode is EntryNode)		nodeData = new EntryNodeData(position);
-				else if (graphNode is ExitNode)			nodeData = new ExitNodeData(position);
-				else if (graphNode is StateNode)		nodeData = new StateNodeData(position, (graphNode as StateNode).StateName);
-				else if (graphNode is ConditionNode)	nodeData = new ConditionNodeData(position);
-				else
-					continue;
+				tempDataAndVisualLinkage.Insert(0, new TempDataAndVisualLinkage(nodeData, graphNode));
 
-				tempDataAndVisualLinkage.Add(new TempDataAndVisualLinkage(nodeData, graphNode));
-
-				target.AddNode(nodeData);
+				target.UnshiftNode(nodeData);
 			}
 
+			///Save connections
 			for (int i = 0; i < tempDataAndVisualLinkage.Count; i++)
 			{
 				FlowGraphNode inputGraphNode = tempDataAndVisualLinkage[i].graphNode;
@@ -125,13 +138,13 @@ namespace Com.Github.Knose1.Flow.Editor
 					while (inputConnections.MoveNext())
 					{
 						Edge edge = inputConnections.Current;
-						
+
 						Port inputPort = edge.input;
 						Port outputPort = edge.output;
 
 						FlowGraphNode inputNode = inputPort.node as FlowGraphNode;
 						FlowGraphNode outputNode = outputPort.node as FlowGraphNode;
-						
+
 						NodeData inputNodeData = tempDataAndVisualLinkage[tempDataAndVisualLinkage.IndexOf(inputNode)].nodeData;
 						NodeData outputNodeData = tempDataAndVisualLinkage[tempDataAndVisualLinkage.IndexOf(outputNode)].nodeData;
 
@@ -139,7 +152,7 @@ namespace Com.Github.Knose1.Flow.Editor
 						int outputPortIndex = outputNode.Ports.IndexOf(outputPort);
 
 						ConnectorData connection = target.GetConnectorData(inputNodeData, inputPortIndex, outputNodeData, outputPortIndex);
-						
+
 						if (!target.IsConnectionRegistered(connection))
 							target.connections.Add(connection);
 					}
@@ -156,7 +169,7 @@ namespace Com.Github.Knose1.Flow.Editor
 
 			return node;
 		}
-		
+
 		public void RemoveNode(FlowGraphNode node)
 		{
 			RemoveElement(node);
@@ -170,11 +183,7 @@ namespace Com.Github.Knose1.Flow.Editor
 		{
 			entryNode = null;
 			exitNode = null;
-
-			for (int i = graphNodes.Count - 1; i >= 0; i--)
-			{
-				RemoveNode(graphNodes[i]);
-			}
+			DestroyGraphVisual();
 
 			if (!manager.Target) return;
 			manager.Target.GetNodes(out List<FlowGraphScriptable.NodeAndIndex> nodes);
@@ -189,6 +198,18 @@ namespace Com.Github.Knose1.Flow.Editor
 
 			//Generate Graph From Datas
 			GenerateGraphFromDatas(nodes);
+		}
+
+		private void DestroyGraphVisual()
+		{
+			for (int i = graphNodes.Count - 1; i >= 0; i--)
+			{
+				RemoveNode(graphNodes[i]);
+			}
+			
+			//Remove all the other elements
+			graphElements.ForEach(RemoveElement);
+
 		}
 
 
@@ -243,7 +264,7 @@ namespace Com.Github.Knose1.Flow.Editor
 				Debug.LogWarning("[" + nameof(FlowGraph) + "] An error occured when Generating the graph");
 			}
 		}
-		
+
 		private void GenerateGraphFromDatas(List<FlowGraphScriptable.NodeAndIndex> nodes)
 		{
 			FlowGraphScriptable target = manager.Target;
@@ -332,7 +353,7 @@ namespace Com.Github.Knose1.Flow.Editor
 				Port inputPort = inputNode.graphNode.Ports[input.portId];
 				Port outputPort = outputNode.graphNode.Ports[output.portId];
 
-				inputPort.ConnectTo(outputPort);
+				AddElement(inputPort.ConnectTo(outputPort));
 			}
 		}
 
@@ -358,7 +379,7 @@ namespace Com.Github.Knose1.Flow.Editor
 		{
 			List<Port> compatiblePorts = new List<Port>();
 			List<Port> ports = base.ports.ToList();
-			
+
 			foreach (Port port in ports)
 			{
 				List<Edge> connections = port.connections.ToList();

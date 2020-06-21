@@ -3,13 +3,15 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Com.Github.Knose1.Flow.Engine.Settings {
+namespace Com.Github.Knose1.Flow.Engine.Settings
+{
 	[CreateAssetMenu(
-		menuName = "FlowGraph/"+nameof(FlowGraphScriptable),
+		menuName = "FlowGraph/" + nameof(FlowGraphScriptable),
 		fileName = nameof(FlowGraphScriptable),
 		order = 0
 	)]
-	public class FlowGraphScriptable : ScriptableObject {
+	public class FlowGraphScriptable : ScriptableObject
+	{
 
 		public struct NodeAndIndex
 		{
@@ -35,7 +37,7 @@ namespace Com.Github.Knose1.Flow.Engine.Settings {
 
 		public void GetNodes(out List<NodeAndIndex> nodes)
 		{
-			
+
 			nodes = new List<NodeAndIndex>();
 
 			for (int i = 0; i < entryNode.Count; i++)
@@ -47,7 +49,7 @@ namespace Com.Github.Knose1.Flow.Engine.Settings {
 			{
 				nodes.Add(new NodeAndIndex(i, exitNode[i].type, exitNode[i].position));
 			}
-			
+
 
 			for (int i = 0; i < stateNodes.Count; i++)
 			{
@@ -90,6 +92,27 @@ namespace Com.Github.Knose1.Flow.Engine.Settings {
 			}
 		}
 
+		public void UnshiftNode(NodeData.NodeData nodeData)
+		{
+			switch (nodeData.type)
+			{
+				case NodeData.NodeData.NodeType.Unknown:
+					break;
+				case NodeData.NodeData.NodeType.Entry:
+					entryNode.Insert(0, nodeData as EntryNodeData);
+					break;
+				case NodeData.NodeData.NodeType.State:
+					stateNodes.Insert(0, nodeData as StateNodeData);
+					break;
+				case NodeData.NodeData.NodeType.Exit:
+					exitNode.Insert(0, nodeData as ExitNodeData);
+					break;
+				case NodeData.NodeData.NodeType.Condition:
+					conditionNodes.Insert(0, nodeData as ConditionNodeData);
+					break;
+			}
+		}
+
 		/// <summary>
 		/// Check if the connection is registered in <see cref="connections"/>
 		/// </summary>
@@ -100,10 +123,10 @@ namespace Com.Github.Knose1.Flow.Engine.Settings {
 			{
 				ConnectorData connectionOther = connections[i];
 
-				if (connectorData == connectionOther) return false;
+				if (connectorData == connectionOther) return true;
 			}
 
-			return true;
+			return false;
 		}
 
 
@@ -126,10 +149,26 @@ namespace Com.Github.Knose1.Flow.Engine.Settings {
 					inputIndex = entryNodeCount + exitNode.IndexOf(input as ExitNodeData);
 					break;
 				case NodeData.NodeData.NodeType.State:
-					inputIndex = entryNodeCount+exitNodeCount+ stateNodes.IndexOf(input as StateNodeData);
+					inputIndex = entryNodeCount + exitNodeCount + stateNodes.IndexOf(input as StateNodeData);
 					break;
 				case NodeData.NodeData.NodeType.Condition:
-					inputIndex = entryNodeCount+exitNodeCount+stateNodesCount+ conditionNodes.IndexOf(input as ConditionNodeData);
+					inputIndex = entryNodeCount + exitNodeCount + stateNodesCount + conditionNodes.IndexOf(input as ConditionNodeData);
+					break;
+			}
+
+			switch (output.type)
+			{
+				case NodeData.NodeData.NodeType.Entry:
+					outputIndex = entryNode.IndexOf(output as EntryNodeData);
+					break;
+				case NodeData.NodeData.NodeType.Exit:
+					outputIndex = entryNodeCount + exitNode.IndexOf(output as ExitNodeData);
+					break;
+				case NodeData.NodeData.NodeType.State:
+					outputIndex = entryNodeCount + exitNodeCount + stateNodes.IndexOf(output as StateNodeData);
+					break;
+				case NodeData.NodeData.NodeType.Condition:
+					outputIndex = entryNodeCount + exitNodeCount + stateNodesCount + conditionNodes.IndexOf(output as ConditionNodeData);
 					break;
 			}
 
@@ -243,7 +282,7 @@ namespace Com.Github.Knose1.Flow.Engine.Settings.NodeData
 	[Serializable]
 	public class EntryNodeData : NodeData
 	{
-		public EntryNodeData(Vector2 position) : base(position) 
+		public EntryNodeData(Vector2 position) : base(position)
 		{
 		}
 
