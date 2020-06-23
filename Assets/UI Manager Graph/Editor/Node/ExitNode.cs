@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace Com.Github.Knose1.Flow.Editor.Node
 {
-	public class ExitNode : FlowGraphNode
+	public class ExitNode : FlowGraphNode, IUnique
 	{
 		protected const string EXIT = "Exit";
 
@@ -29,6 +29,11 @@ namespace Com.Github.Knose1.Flow.Editor.Node
 		public override NodeData Serialize()
 		{
 			return new ExitNodeData(GetPosition().position);
+		}
+
+		public static ExitNode FromData(ExitNodeData data)
+		{
+			return new ExitNode();
 		}
 	}
 }

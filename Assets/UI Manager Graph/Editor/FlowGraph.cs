@@ -27,7 +27,16 @@ namespace Com.Github.Knose1.Flow.Editor
 		{
 			get
 			{
-				return selection.Count > 0 && !selection.Contains(entryNode) && !selection.Contains(exitNode);
+				int count = 0;
+				for (int i = selection.Count - 1; i >= 0; i--)
+				{
+					if (selection[i] is FlowGraphNode) ++count;
+				}
+
+				bool containsEntry = selection.Contains(entryNode);
+				bool containsExit = selection.Contains(exitNode);
+
+				return count > 0 && !(count == 1 && (containsEntry || containsExit)) && !(count == 2 && containsEntry && containsExit); //The selection can't contain only entry / exit node
 			}
 		}
 		protected override bool canCutSelection
@@ -65,9 +74,11 @@ namespace Com.Github.Knose1.Flow.Editor
 		/*                Fields                */
 		/*                                      */
 		/*//////////////////////////////////////*/
+
+
 		protected EntryNode entryNode = null;
 		protected ExitNode exitNode = null;
-		protected List<FlowGraphNode> graphNodes = new List<FlowGraphNode>();
+		//protected List<FlowGraphNode> graphNodes = new List<FlowGraphNode>();
 		protected FlowGraphManager manager;
 
 
@@ -76,6 +87,8 @@ namespace Com.Github.Knose1.Flow.Editor
 		/*             Constructor              */
 		/*                                      */
 		/*//////////////////////////////////////*/
+
+
 		public FlowGraph(FlowGraphManager manager) : base()
 		{
 			SetupGraph();
@@ -85,11 +98,13 @@ namespace Com.Github.Knose1.Flow.Editor
 
 		}
 
+
 		/*//////////////////////////////////////*/
 		/*                                      */
-		/*               Methods                */
+		/*            Public Methods            */
 		/*                                      */
 		/*//////////////////////////////////////*/
+
 
 		/// <summary>
 		/// Save the graph in a <see cref="FlowGraphScriptable"/>
@@ -100,20 +115,56 @@ namespace Com.Github.Knose1.Flow.Editor
 			List<UnityEditor.Experimental.GraphView.Node> nodes = this.nodes.ToList();
 
 			//Empty override the save
-			target.EmptyNodes();
-			target.connections = new List<ConnectorData>();
+			target.ClearAllDatas();
 
+			target.nodes = GenerateNodeDataList(nodes);
+		}
+
+		public FlowGraphNode CreateNode(FlowGraphNode node, bool relativePosition = true)
+		{
+			AddElement(node);
+
+			return node;
+		}
+
+		public void RemoveNode(FlowGraphNode node)
+		{
+			RemoveElement(node);
+		}
+
+		/*//////////////////////////////////////*/
+		/*                                      */
+		/*          Protected Methods           */
+		/*                                      */
+		/*//////////////////////////////////////*/
+		
+		/// <summary>
+		/// Get <see cref="NodeDataList"/> from a list of Nodes
+		/// </summary>
+		/// <param name="nodes">The nodes to register in the <see cref="NodeDataList"/></param>
+		/// <returns></returns>
+		protected NodeDataList GenerateNodeDataList(List<UnityEditor.Experimental.GraphView.Node> nodes) => GenerateNodeDataList(nodes, null);
+		
+		/// <summary>
+		/// Get <see cref="NodeDataList"/> from a list of <see cref="UnityEditor.Experimental.GraphView.Node"/> and a list of <see cref="Edge"/>
+		/// </summary>
+		/// <param name="nodes">The nodes to register in the <see cref="NodeDataList"/></param>
+		/// <param name="edges">The only edges that can be registered in the <see cref="NodeDataList"/></param>
+		/// <returns></returns>
+		protected NodeDataList GenerateNodeDataList(List<UnityEditor.Experimental.GraphView.Node> nodes, List<Edge> edges)
+		{
+			NodeDataList target = new NodeDataList();
 			List<TempDataAndVisualLinkage> tempDataAndVisualLinkage = new List<TempDataAndVisualLinkage>();
 
 			///Save nodes
-			for (int i = graphNodes.Count - 1; i >= 0; i--)
+			for (int i = nodes.Count - 1; i >= 0; i--)
 			{
-				FlowGraphNode graphNode = graphNodes[i];
+				FlowGraphNode graphNode = nodes[i] as FlowGraphNode;
 
 				//Check if the node is on the canvas
 				if (!nodes.Contains(graphNode))
 				{
-					graphNodes.Remove(graphNode);
+					nodes.Remove(graphNode);
 					continue;
 				}
 
@@ -138,6 +189,7 @@ namespace Com.Github.Knose1.Flow.Editor
 					while (inputConnections.MoveNext())
 					{
 						Edge edge = inputConnections.Current;
+						if (edges != null && !edges.Contains(edge)) continue;
 
 						Port inputPort = edge.input;
 						Port outputPort = edge.output;
@@ -145,8 +197,13 @@ namespace Com.Github.Knose1.Flow.Editor
 						FlowGraphNode inputNode = inputPort.node as FlowGraphNode;
 						FlowGraphNode outputNode = outputPort.node as FlowGraphNode;
 
-						NodeData inputNodeData = tempDataAndVisualLinkage[tempDataAndVisualLinkage.IndexOf(inputNode)].nodeData;
-						NodeData outputNodeData = tempDataAndVisualLinkage[tempDataAndVisualLinkage.IndexOf(outputNode)].nodeData;
+						int tempDataInputIndex = tempDataAndVisualLinkage.IndexOf(inputNode);
+						int tempDataOutputIndex = tempDataAndVisualLinkage.IndexOf(outputNode);
+
+						if (tempDataInputIndex == -1 || tempDataOutputIndex == -1) continue;
+
+						NodeData inputNodeData = tempDataAndVisualLinkage[tempDataInputIndex].nodeData;
+						NodeData outputNodeData = tempDataAndVisualLinkage[tempDataOutputIndex].nodeData;
 
 						int inputPortIndex = inputNode.Ports.IndexOf(inputPort);
 						int outputPortIndex = outputNode.Ports.IndexOf(outputPort);
@@ -157,36 +214,133 @@ namespace Com.Github.Knose1.Flow.Editor
 							target.connections.Add(connection);
 					}
 				}
+			}
 
-
+			return target;
+		}
+		
+		/// <summary>
+		/// Generate an entirely new Graph
+		/// </summary>
+		protected void GenerateNewGraph()
+		{
+			try
+			{
+				CreateNode(entryNode = GenerateEntryPointNode(), false);
+				CreateNode(exitNode = GenerateExitPointNode(), false);
+			}
+			catch (Exception err)
+			{
+				Debug.LogError(err);
+				Debug.LogWarning("[" + nameof(FlowGraph) + "] An error occured when Generating the graph");
 			}
 		}
 
-		public FlowGraphNode CreateNode(FlowGraphNode node, bool relativePosition = true)
+		/// <summary>
+		/// Generate a graph from the scriptable's datas
+		/// </summary>
+		/// <param name="nodes"></param>
+		protected List<ISelectable> GenerateGraphFromDatas(NodeDataList target, Vector2 offsetPosition = default)
 		{
-			graphNodes.Add(node);
-			AddElement(node);
+			target.GetNodes(out List<NodeDataList.NodeAndIndex> nodes);
+			return GenerateGraphFromDatas(target, nodes, offsetPosition);
+		}
+		
+		/// <summary>
+		/// Generate a graph from the scriptable's datas
+		/// </summary>
+		/// <param name="nodes"></param>
+		protected List<ISelectable> GenerateGraphFromDatas(NodeDataList target, List<NodeDataList.NodeAndIndex> nodes, Vector2 offsetPosition = default)
+		{
+			List<ISelectable> selectables = new List<ISelectable>();
 
-			return node;
+			List<TempDataAndVisualLinkage> tempDataAndVisualLinkage = new List<TempDataAndVisualLinkage>();
+			for (int i = 0; i < nodes.Count; i++)
+			{
+				NodeDataList.NodeAndIndex nodeAndIndex = nodes[i];
+
+				NodeData nodeData = null;
+
+				FlowGraphNode flowGraphNode = null;
+
+				if (nodeAndIndex.type == typeof(EntryNodeData)) { 
+					nodeData = target.entryNode;
+					flowGraphNode = entryNode = EntryNode.FromData(nodeData as EntryNodeData);
+				}
+
+				else if (nodeAndIndex.type == typeof(StateNodeData))
+				{
+					nodeData = target.stateNodes[nodeAndIndex.index];
+					flowGraphNode = StateNode.FromData(nodeData as StateNodeData);
+				}
+
+				else if (nodeAndIndex.type == typeof(ExitNodeData)) 
+				{
+					nodeData = target.exitNode;
+					flowGraphNode = exitNode = ExitNode.FromData(nodeData as ExitNodeData);
+				}
+
+				else if (nodeAndIndex.type == typeof(ConditionNodeData)) 
+				{
+					nodeData = target.conditionNodes[nodeAndIndex.index];
+					flowGraphNode = ConditionNode.FromData(nodeData as ConditionNodeData);
+				}
+
+				if (flowGraphNode != null)
+				{
+					flowGraphNode.SetPositionFromData(nodeAndIndex.position + offsetPosition);
+					CreateNode(flowGraphNode);
+
+					selectables.Add(flowGraphNode);
+				}
+
+				tempDataAndVisualLinkage.Add(new TempDataAndVisualLinkage(nodeData, flowGraphNode));
+			}
+
+			//Connect them
+			List<ConnectorData> connectorDatas = target.connections;
+			for (int g = connectorDatas.Count - 1; g >= 0; g--)
+			{
+				ConnectorData connection = connectorDatas[g];
+
+				PortData input = connection.input;
+				TempDataAndVisualLinkage inputNode = tempDataAndVisualLinkage[input.nodeId];
+
+				PortData output = connection.output;
+				TempDataAndVisualLinkage outputNode = tempDataAndVisualLinkage[output.nodeId];
+
+				if (!inputNode || !outputNode) continue;
+
+				Port inputPort = inputNode.graphNode.Ports[input.portId];
+				Port outputPort = outputNode.graphNode.Ports[output.portId];
+
+				Edge edge = inputPort.ConnectTo(outputPort);
+				AddElement(edge);
+				selectables.Add(edge);
+			}
+
+			return selectables;
 		}
 
-		public void RemoveNode(FlowGraphNode node)
-		{
-			RemoveElement(node);
-			graphNodes.Remove(node);
-		}
-
+		/*//////////////////////////////////////*/
+		/*                                      */
+		/*           Private Methods            */
+		/*                                      */
+		/*//////////////////////////////////////*/
+		
 		/// <summary>
 		/// On Data change, we must load the graph
 		/// </summary>
 		private void Manager_OnDataChange()
 		{
+			//Remove old data
 			entryNode = null;
 			exitNode = null;
 			DestroyGraphVisual();
 
+			//If there is no target, there is no graph to load
 			if (!manager.Target) return;
-			manager.Target.GetNodes(out List<FlowGraphScriptable.NodeAndIndex> nodes);
+			manager.Target.GetNodes(out List<NodeDataList.NodeAndIndex> nodes);
 
 			//Create New Graph
 			if (nodes.Count < 2)
@@ -197,23 +351,26 @@ namespace Com.Github.Knose1.Flow.Editor
 			}
 
 			//Generate Graph From Datas
-			GenerateGraphFromDatas(nodes);
+			GenerateGraphFromDatas(manager.Target.nodes, nodes);
 		}
 
+		/// <summary>
+		/// Remove all elements on the graph
+		/// </summary>
 		private void DestroyGraphVisual()
 		{
-			for (int i = graphNodes.Count - 1; i >= 0; i--)
-			{
-				RemoveNode(graphNodes[i]);
-			}
-			
-			//Remove all the other elements
+			//Reset the nodes from the list
+			//graphNodes = new List<FlowGraphNode>();
+
+			//Remove all the elements
 			graphElements.ForEach(RemoveElement);
 
 		}
 
-
-
+		/// <summary>
+		/// Load StyleSheet, SetupZoom, AddManipulators, Add the GridBackground and Stretch to Parent Size,
+		/// Register unserializeAndPaste and serializeGraphElements
+		/// </summary>
 		private void SetupGraph()
 		{
 			StyleSheet styleSheet = null;
@@ -249,114 +406,17 @@ namespace Com.Github.Knose1.Flow.Editor
 			GridBackground gridBackground = new GridBackground();
 			Insert(0, gridBackground);
 			gridBackground.StretchToParentSize();
+			
+			serializeGraphElements -= SerializeGraphElements;
+			unserializeAndPaste -= UnserializeAndPasteOperation;
+
+			serializeGraphElements += SerializeGraphElementsAsNodeDataList;
+			unserializeAndPaste += UnserializeAndPastNodeDataList;
 		}
-
-		private void GenerateNewGraph()
-		{
-			try
-			{
-				CreateNode(entryNode = GenerateEntryPointNode(), false);
-				CreateNode(exitNode = GenerateExitPointNode(), false);
-			}
-			catch (Exception err)
-			{
-				Debug.LogError(err);
-				Debug.LogWarning("[" + nameof(FlowGraph) + "] An error occured when Generating the graph");
-			}
-		}
-
-		private void GenerateGraphFromDatas(List<FlowGraphScriptable.NodeAndIndex> nodes)
-		{
-			FlowGraphScriptable target = manager.Target;
-
-			List<TempDataAndVisualLinkage> tempDataAndVisualLinkage = new List<TempDataAndVisualLinkage>();
-			for (int i = 0; i < nodes.Count; i++)
-			{
-				FlowGraphScriptable.NodeAndIndex nodeAndIndex = nodes[i];
-
-				NodeData node = null;
-
-				FlowGraphNode flowGraphNode = null;
-				switch (nodeAndIndex.type)
-				{
-					case NodeData.NodeType.Entry:
-
-						node = target.entryNode[nodeAndIndex.index];
-
-						if (entryNode == null)
-						{
-							flowGraphNode = entryNode = new EntryNode();
-						}
-						else
-						{
-							Debug.LogWarning("Two Entry nodes has been found");
-							continue;
-						}
-						break;
-
-					case NodeData.NodeType.State:
-
-						node = target.stateNodes[nodeAndIndex.index];
-
-						flowGraphNode = new StateNode();
-						(flowGraphNode as StateNode).StateName = (node as StateNodeData).name;
-						break;
-
-					case NodeData.NodeType.Exit:
-
-						node = target.exitNode[nodeAndIndex.index];
-
-						if (exitNode == null)
-						{
-							flowGraphNode = exitNode = new ExitNode();
-						}
-						else
-						{
-							Debug.LogWarning("Two Exit nodes has been found");
-							continue;
-						}
-						break;
-
-					case NodeData.NodeType.Condition:
-
-						node = target.conditionNodes[nodeAndIndex.index];
-
-						flowGraphNode = new ConditionNode();
-						break;
-
-				}
-
-				if (flowGraphNode != null)
-				{
-					Rect pos = flowGraphNode.GetPosition();
-					pos.position = nodeAndIndex.position;
-					flowGraphNode.SetPosition(pos);
-					CreateNode(flowGraphNode);
-				}
-
-				tempDataAndVisualLinkage.Add(new TempDataAndVisualLinkage(node, flowGraphNode));
-			}
-
-			List<ConnectorData> connectorDatas = manager.Target.connections;
-			for (int g = connectorDatas.Count - 1; g >= 0; g--)
-			{
-				ConnectorData connection = connectorDatas[g];
-
-				PortData input = connection.input;
-				TempDataAndVisualLinkage inputNode = tempDataAndVisualLinkage[input.nodeId];
-
-				PortData output = connection.output;
-				TempDataAndVisualLinkage outputNode = tempDataAndVisualLinkage[output.nodeId];
-
-				if (!inputNode || !outputNode) continue;
-
-				Port inputPort = inputNode.graphNode.Ports[input.portId];
-				Port outputPort = outputNode.graphNode.Ports[output.portId];
-
-				AddElement(inputPort.ConnectTo(outputPort));
-			}
-		}
-
+		/// <summary>
+		/// Util function when generating New Graph
+		/// </summary>
+		/// <returns></returns>
 		private EntryNode GenerateEntryPointNode()
 		{
 			EntryNode node = new EntryNode();
@@ -365,7 +425,11 @@ namespace Com.Github.Knose1.Flow.Editor
 
 			return node;
 		}
-
+		
+		/// <summary>
+		/// Util function when generating New Graph
+		/// </summary>
+		/// <returns></returns>
 		private ExitNode GenerateExitPointNode()
 		{
 			ExitNode node = new ExitNode();
@@ -374,7 +438,58 @@ namespace Com.Github.Knose1.Flow.Editor
 
 			return node;
 		}
+		
+		/*//////////////////////////////////////*/
+		/*                                      */
+		/*  Serialize and Unserialize Methods   */
+		/*                                      */
+		/*//////////////////////////////////////*/
 
+		protected string SerializeGraphElementsAsNodeDataList(IEnumerable<GraphElement> elements)
+		{
+			List<Edge> edges = new List<Edge>();
+			List<UnityEditor.Experimental.GraphView.Node> nodes = new List<UnityEditor.Experimental.GraphView.Node>();
+
+			IEnumerator<GraphElement> enumerator = elements.GetEnumerator();
+
+			while (enumerator.MoveNext())
+			{
+				if (enumerator.Current is Edge) edges.Add(enumerator.Current as Edge);
+				else if (enumerator.Current is FlowGraphNode && !(enumerator.Current is IUnique)) nodes.Add(enumerator.Current as FlowGraphNode);
+			}
+
+			NodeDataList datas = GenerateNodeDataList(nodes, edges);
+			return JsonUtility.ToJson(datas);
+		}
+
+		protected void UnserializeAndPastNodeDataList(string operationName, string data)
+		{
+			List<ISelectable> selection = this.selection.ToList();
+			foreach (ISelectable selectionItem in selection)
+			{
+				selectionItem.Unselect(this);
+			}
+
+			selection = GenerateGraphFromDatas(JsonUtility.FromJson<NodeDataList>(data), new Vector2(50,50));
+
+			foreach (ISelectable selectionItem in selection)
+			{
+				selectionItem.Select(this, true);
+			}
+		}
+
+		/*//////////////////////////////////////*/
+		/*                                      */
+		/*              Overrides               */
+		/*                                      */
+		/*//////////////////////////////////////*/
+
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <param name="startPort"></param>
+		/// <param name="nodeAdapter"></param>
+		/// <returns></returns>
 		public override List<Port> GetCompatiblePorts(Port startPort, NodeAdapter nodeAdapter)
 		{
 			List<Port> compatiblePorts = new List<Port>();
@@ -383,7 +498,20 @@ namespace Com.Github.Knose1.Flow.Editor
 			foreach (Port port in ports)
 			{
 				List<Edge> connections = port.connections.ToList();
-				bool isAlreadyConnected = connections.Contains(startPort.edgeConnector.edgeDragHelper.edgeCandidate);
+
+				bool isAlreadyConnected = false;
+				for (int i = connections.Count - 1; i >= 0; i--)
+				{
+					Port other = null;
+
+
+					if (other == port)
+					{
+						isAlreadyConnected = true;
+						break;
+					}
+				}
+
 
 				if (startPort != port && startPort.node != port.node && !isAlreadyConnected)
 					compatiblePorts.Add(port);
@@ -391,13 +519,19 @@ namespace Com.Github.Knose1.Flow.Editor
 
 			return compatiblePorts;
 		}
+		
+		/*//////////////////////////////////////*/
+		/*                                      */
+		/*               Dispose                */
+		/*                                      */
+		/*//////////////////////////////////////*/
 
 		public void Dispose()
 		{
 			manager.OnDataChange -= Manager_OnDataChange;
 		}
 	}
-
+	
 	/// <summary>
 	/// Temp class to link visual and data when generating graph from datas
 	/// </summary>

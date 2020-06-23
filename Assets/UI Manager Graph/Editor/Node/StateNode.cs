@@ -55,5 +55,13 @@ namespace Com.Github.Knose1.Flow.Editor.Node
 		{
 			return new StateNodeData(GetPosition().position, StateName);
 		}
+
+		public static StateNode FromData(StateNodeData data)
+		{
+			StateNode toReturn = new StateNode();
+			toReturn.StateName = data.name;
+
+			return toReturn;
+		}
 	}
 }

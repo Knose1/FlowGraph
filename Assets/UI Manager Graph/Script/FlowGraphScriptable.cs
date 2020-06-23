@@ -5,21 +5,22 @@ using UnityEngine;
 
 namespace Com.Github.Knose1.Flow.Engine.Settings
 {
-	[CreateAssetMenu(
-		menuName = "FlowGraph/" + nameof(FlowGraphScriptable),
-		fileName = nameof(FlowGraphScriptable),
-		order = 0
-	)]
-	public class FlowGraphScriptable : ScriptableObject
+	/// <summary>
+	/// Class that register nodes and their connection
+	/// </summary>
+	[Serializable]
+	public class NodeDataList
 	{
-
+		/// <summary>
+		/// Struct that register the type of a Node and its index in the list (see: <see cref="GetNodes(out List{NodeAndIndex})"/>
+		/// </summary>
 		public struct NodeAndIndex
 		{
 			public int index;
-			public NodeData.NodeData.NodeType type;
+			public Type type;
 			public Vector2 position;
 
-			public NodeAndIndex(int index, NodeData.NodeData.NodeType type, Vector2 position)
+			public NodeAndIndex(int index, Type type, Vector2 position)
 			{
 				this.index = index;
 				this.type = type;
@@ -27,96 +28,131 @@ namespace Com.Github.Knose1.Flow.Engine.Settings
 			}
 		}
 
-		public void EmptyNodes()
+		public EntryNodeData entryNode;
+		public ExitNodeData exitNode;
+		public List<StateNodeData> stateNodes;
+		public List<ConditionNodeData> conditionNodes;
+
+		/// <summary>
+		/// Connections between the Nodes
+		/// </summary>
+		public List<ConnectorData> connections;
+
+		public NodeDataList()
 		{
-			entryNode = new List<EntryNodeData>();
-			exitNode = new List<ExitNodeData>();
-			stateNodes = new List<StateNodeData>();
-			conditionNodes = new List<ConditionNodeData>();
+			ClearAllDatas();
 		}
 
+		public NodeDataList(EntryNodeData entryNode, ExitNodeData exitNode, List<StateNodeData> stateNodes, List<ConditionNodeData> conditionNodes, List<ConnectorData> connections)
+		{
+			this.entryNode = entryNode;
+			this.exitNode = exitNode;
+			this.stateNodes = stateNodes;
+			this.conditionNodes = conditionNodes;
+			this.connections = connections;
+		}
+
+		/// <summary>
+		/// Clear all datas
+		/// </summary>
+		public void ClearAllDatas()
+		{
+			entryNode = null;
+			exitNode = null;
+			stateNodes = new List<StateNodeData>();
+			conditionNodes = new List<ConditionNodeData>();
+
+			connections = new List<ConnectorData>();
+		}
+
+		/// <summary>
+		/// Get the <see cref="NodeAndIndex"/>.<br/>
+		/// From index 0 to nodes.count :<br/>
+		/// <br/>
+		/// <see cref="entryNode"/>, <see cref="exitNode"/>, <see cref="stateNodes"/>, <see cref="conditionNodes"/>
+		/// </summary>
+		/// <param name="nodes"></param>
 		public void GetNodes(out List<NodeAndIndex> nodes)
 		{
 
 			nodes = new List<NodeAndIndex>();
 
-			for (int i = 0; i < entryNode.Count; i++)
-			{
-				nodes.Add(new NodeAndIndex(i, entryNode[i].type, entryNode[i].position));
-			}
+			if (entryNode != null && entryNode.IsNotNull) nodes.Add(new NodeAndIndex(0, entryNode.GetType(), entryNode.position));
 
-			for (int i = 0; i < exitNode.Count; i++)
-			{
-				nodes.Add(new NodeAndIndex(i, exitNode[i].type, exitNode[i].position));
-			}
+			if (exitNode != null && exitNode.IsNotNull) nodes.Add(new NodeAndIndex(0, exitNode.GetType(), exitNode.position));
 
 
 			for (int i = 0; i < stateNodes.Count; i++)
 			{
-				nodes.Add(new NodeAndIndex(i, stateNodes[i].type, stateNodes[i].position));
+				nodes.Add(new NodeAndIndex(i, stateNodes[i].GetType(), stateNodes[i].position));
 			}
 
 			for (int i = 0; i < conditionNodes.Count; i++)
 			{
-				nodes.Add(new NodeAndIndex(i, conditionNodes[i].type, conditionNodes[i].position));
+				nodes.Add(new NodeAndIndex(i, conditionNodes[i].GetType(), conditionNodes[i].position));
 			}
 		}
 
+		/// <summary>
+		/// Get a list of nodes <see cref="NodeData"/>.<br/>
+		/// <br/>
+		/// <see cref="entryNode"/>, <see cref="exitNode"/>, <see cref="stateNodes"/>, <see cref="conditionNodes"/>
+		/// </summary>
+		/// <param name="nodes"></param>
+		public void GetNodes(out List<NodeData.NodeData> nodes)
+		{
 
-		[SerializeField] public List<EntryNodeData> entryNode = new List<EntryNodeData>();
-		[SerializeField] public List<ExitNodeData> exitNode = new List<ExitNodeData>();
-		[SerializeField] public List<StateNodeData> stateNodes = new List<StateNodeData>();
-		[SerializeField] public List<ConditionNodeData> conditionNodes = new List<ConditionNodeData>();
+			nodes = new List<NodeData.NodeData>();
+			nodes.Add(entryNode);
+			nodes.Add(exitNode);
+			nodes.AddRange(stateNodes);
+			nodes.AddRange(conditionNodes);
 
-		[SerializeField] public List<ConnectorData> connections;
+			nodes = nodes.FindAll((NodeData.NodeData d) => { return d != null && d.IsNotNull; });
+		}
 
-
+		/// <summary>
+		/// Adds the <see cref="NodeData.NodeData"/> at the end of any list
+		/// </summary>
+		/// <param name="nodeData">The <see cref="NodeData.NodeData"/> to add</param>
 		public void AddNode(NodeData.NodeData nodeData)
 		{
-			switch (nodeData.type)
-			{
-				case NodeData.NodeData.NodeType.Unknown:
-					break;
-				case NodeData.NodeData.NodeType.Entry:
-					entryNode.Add(nodeData as EntryNodeData);
-					break;
-				case NodeData.NodeData.NodeType.State:
-					stateNodes.Add(nodeData as StateNodeData);
-					break;
-				case NodeData.NodeData.NodeType.Exit:
-					exitNode.Add(nodeData as ExitNodeData);
-					break;
-				case NodeData.NodeData.NodeType.Condition:
-					conditionNodes.Add(nodeData as ConditionNodeData);
-					break;
-			}
+			if (nodeData is EntryNodeData)
+				entryNode = nodeData as EntryNodeData;
+
+			else if (nodeData is ExitNodeData)
+				exitNode = nodeData as ExitNodeData;
+
+			else if (nodeData is StateNodeData)
+				stateNodes.Add(nodeData as StateNodeData);
+
+			else if (nodeData is ConditionNodeData)
+				conditionNodes.Add(nodeData as ConditionNodeData);
 		}
 
+		/// <summary>
+		/// Adds the <see cref="NodeData.NodeData"/> at index 0 of any list
+		/// </summary>
+		/// <param name="nodeData">The <see cref="NodeData.NodeData"/> to add</param>
 		public void UnshiftNode(NodeData.NodeData nodeData)
 		{
-			switch (nodeData.type)
-			{
-				case NodeData.NodeData.NodeType.Unknown:
-					break;
-				case NodeData.NodeData.NodeType.Entry:
-					entryNode.Insert(0, nodeData as EntryNodeData);
-					break;
-				case NodeData.NodeData.NodeType.State:
-					stateNodes.Insert(0, nodeData as StateNodeData);
-					break;
-				case NodeData.NodeData.NodeType.Exit:
-					exitNode.Insert(0, nodeData as ExitNodeData);
-					break;
-				case NodeData.NodeData.NodeType.Condition:
-					conditionNodes.Insert(0, nodeData as ConditionNodeData);
-					break;
-			}
+			if (nodeData is EntryNodeData)
+				entryNode = nodeData as EntryNodeData;
+
+			else if (nodeData is ExitNodeData)
+				exitNode = nodeData as ExitNodeData;
+
+			else if (nodeData is StateNodeData)
+				stateNodes.Insert(0, nodeData as StateNodeData);
+
+			else if (nodeData is ConditionNodeData)
+				conditionNodes.Insert(0, nodeData as ConditionNodeData);
 		}
 
 		/// <summary>
 		/// Check if the connection is registered in <see cref="connections"/>
 		/// </summary>
-		/// <returns></returns>
+		/// <returns>Returns true when the connection is in <see cref="connections"/></returns>
 		public bool IsConnectionRegistered(ConnectorData connectorData)
 		{
 			for (int i = connections.Count - 1; i >= 0; i--)
@@ -129,51 +165,75 @@ namespace Com.Github.Knose1.Flow.Engine.Settings
 			return false;
 		}
 
-
-
+		/// <summary>
+		/// Get the <see cref="ConnectorData"/> from the NodeData (input and output) and their portId<br/>
+		/// <br/>
+		/// ps : those 2 lines are equivalents / are the same 
+		/// <code>
+		///		GetConnectorData(a,0,b,1) //Create a connction between a (port 0) and b (port 1)<br/>
+		///		GetConnectorData(b,1,a,0) //Create a connction between a (port 0) and b (port 1)
+		///	</code>
+		/// </summary>
+		/// <param name="input">The input node</param>
+		/// <param name="inputPortId">The input node's port</param>
+		/// <param name="output">The output node</param>
+		/// <param name="outputPortId">The output node's port</param>
+		/// <returns></returns>
 		public ConnectorData GetConnectorData(NodeData.NodeData input, int inputPortId, NodeData.NodeData output, int outputPortId)
 		{
-			int inputIndex = -1;
-			int outputIndex = -1;
+			GetNodes(out List<NodeData.NodeData> nodes);
 
-			int entryNodeCount = entryNode.Count;
-			int exitNodeCount = exitNode.Count;
-			int stateNodesCount = stateNodes.Count;
-
-			switch (input.type)
-			{
-				case NodeData.NodeData.NodeType.Entry:
-					inputIndex = entryNode.IndexOf(input as EntryNodeData);
-					break;
-				case NodeData.NodeData.NodeType.Exit:
-					inputIndex = entryNodeCount + exitNode.IndexOf(input as ExitNodeData);
-					break;
-				case NodeData.NodeData.NodeType.State:
-					inputIndex = entryNodeCount + exitNodeCount + stateNodes.IndexOf(input as StateNodeData);
-					break;
-				case NodeData.NodeData.NodeType.Condition:
-					inputIndex = entryNodeCount + exitNodeCount + stateNodesCount + conditionNodes.IndexOf(input as ConditionNodeData);
-					break;
-			}
-
-			switch (output.type)
-			{
-				case NodeData.NodeData.NodeType.Entry:
-					outputIndex = entryNode.IndexOf(output as EntryNodeData);
-					break;
-				case NodeData.NodeData.NodeType.Exit:
-					outputIndex = entryNodeCount + exitNode.IndexOf(output as ExitNodeData);
-					break;
-				case NodeData.NodeData.NodeType.State:
-					outputIndex = entryNodeCount + exitNodeCount + stateNodes.IndexOf(output as StateNodeData);
-					break;
-				case NodeData.NodeData.NodeType.Condition:
-					outputIndex = entryNodeCount + exitNodeCount + stateNodesCount + conditionNodes.IndexOf(output as ConditionNodeData);
-					break;
-			}
-
-			return new ConnectorData(new PortData(inputIndex, inputPortId), new PortData(outputIndex, outputPortId));
+			return new ConnectorData(new PortData(nodes.IndexOf(input), inputPortId), new PortData(nodes.IndexOf(output), outputPortId));
 		}
+
+	}
+
+	[CreateAssetMenu(
+		menuName = "FlowGraph/" + nameof(FlowGraphScriptable),
+		fileName = nameof(FlowGraphScriptable),
+		order = 0
+	)]
+	public class FlowGraphScriptable : ScriptableObject
+	{
+		[SerializeField] public NodeDataList nodes = new NodeDataList();
+
+		public EntryNodeData EntryNode
+		{
+			get => nodes.entryNode;
+			set => nodes.entryNode = value;
+		}
+
+		public ExitNodeData ExitNode
+		{
+			get => nodes.exitNode;
+			set => nodes.exitNode = value;
+		}
+
+		public List<StateNodeData> StateNodes
+		{
+			get => nodes.stateNodes;
+			set => nodes.stateNodes = value;
+		}
+
+		public List<ConditionNodeData> ConditionNodes
+		{
+			get => nodes.conditionNodes;
+			set => nodes.conditionNodes = value;
+		}
+
+		public List<ConnectorData> Connections
+		{
+			get => nodes.connections;
+			set => nodes.connections = value;
+		}
+
+		public void ClearAllDatas() => nodes.ClearAllDatas();
+		public void GetNodes(out List<NodeDataList.NodeAndIndex> nodes) => this.nodes.GetNodes(out nodes);
+
+		public void AddNode(NodeData.NodeData nodeData) => nodes.AddNode(nodeData);
+		public void UnshiftNode(NodeData.NodeData nodeData) => nodes.UnshiftNode(nodeData);
+		public bool IsConnectionRegistered(ConnectorData connectorData) => nodes.IsConnectionRegistered(connectorData);
+		public ConnectorData GetConnectorData(NodeData.NodeData input, int inputPortId, NodeData.NodeData output, int outputPortId) => nodes.GetConnectorData(input, inputPortId, output, outputPortId);
 	}
 }
 
@@ -248,34 +308,17 @@ namespace Com.Github.Knose1.Flow.Engine.Settings.NodeData
 	[Serializable]
 	public class NodeData
 	{
-		public enum NodeType
-		{
-			Unknown,
-			Entry,
-			Exit,
-			State,
-			Condition
-		}
-
-		/// <summary>
-		/// The type of node
-		/// </summary>
-		[SerializeField] public NodeType type;
-
 		/// <summary>
 		/// The position of the node
 		/// </summary>
 		[SerializeField] public Vector2 position;
+		[SerializeField, HideInInspector] private bool _isNotNull = false;
+		public bool IsNotNull => _isNotNull;
 
 		public NodeData(Vector2 position)
 		{
-			SetType();
 			this.position = position;
-		}
-
-		protected virtual void SetType()
-		{
-			type = NodeType.Unknown;
+			_isNotNull = true;
 		}
 	}
 
@@ -284,11 +327,6 @@ namespace Com.Github.Knose1.Flow.Engine.Settings.NodeData
 	{
 		public EntryNodeData(Vector2 position) : base(position)
 		{
-		}
-
-		protected override void SetType()
-		{
-			type = NodeType.Entry;
 		}
 	}
 
@@ -301,11 +339,6 @@ namespace Com.Github.Knose1.Flow.Engine.Settings.NodeData
 		{
 			this.name = name;
 		}
-
-		protected override void SetType()
-		{
-			type = NodeType.State;
-		}
 	}
 
 	[Serializable]
@@ -314,11 +347,6 @@ namespace Com.Github.Knose1.Flow.Engine.Settings.NodeData
 		public ExitNodeData(Vector2 position) : base(position)
 		{
 		}
-
-		protected override void SetType()
-		{
-			type = NodeType.Exit;
-		}
 	}
 
 	[Serializable]
@@ -326,11 +354,6 @@ namespace Com.Github.Knose1.Flow.Engine.Settings.NodeData
 	{
 		public ConditionNodeData(Vector2 position) : base(position)
 		{
-		}
-
-		protected override void SetType()
-		{
-			type = NodeType.Condition;
 		}
 	}
 }

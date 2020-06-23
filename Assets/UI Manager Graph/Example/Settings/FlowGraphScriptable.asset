@@ -12,8 +12,28 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 514937b7f687f3b4996934d27f571918, type: 3}
   m_Name: FlowGraphScriptable
   m_EditorClassIdentifier: 
-  entryNode: []
-  exitNode: []
-  stateNodes: []
-  conditionNodes: []
-  connections: []
+  nodes:
+    entryNode:
+      position: {x: -62, y: -3}
+      _isNotNull: 1
+    exitNode:
+      position: {x: 500, y: 201}
+      _isNotNull: 1
+    stateNodes:
+    - position: {x: 166, y: -61}
+      _isNotNull: 1
+      name: State
+    conditionNodes: []
+    connections:
+    - input:
+        nodeId: 2
+        portId: 1
+      output:
+        nodeId: 0
+        portId: 0
+    - input:
+        nodeId: 1
+        portId: 0
+      output:
+        nodeId: 2
+        portId: 0

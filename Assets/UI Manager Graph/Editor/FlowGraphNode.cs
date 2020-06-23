@@ -7,6 +7,10 @@ using UnityEngine.UIElements;
 
 namespace Com.Github.Knose1.Flow.Editor
 {
+	/// <summary>
+	/// Mark a node as Unique
+	/// </summary>
+	public interface IUnique {}
 
 	/// <summary>
 	/// Base Node class for <see cref="FlowGraph"/>
@@ -88,6 +92,14 @@ namespace Com.Github.Knose1.Flow.Editor
 
 	public static class UIManagerGraphNodeExtend
 	{
+		public static T SetPositionFromData<T>(this T node, Vector2 position) where T : FlowGraphNode
+		{
+			Rect pos = node.GetPosition();
+			pos.position = position;
+			node.SetPosition(pos);
+			return node;
+		}
+
 		public static void SetPortName(this Port port, string name)
 		{
 			port.portName = name;

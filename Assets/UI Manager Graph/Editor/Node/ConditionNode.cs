@@ -37,10 +37,14 @@ namespace Com.Github.Knose1.Flow.Editor.Node
 			RefreshPorts();
 		}
 
-
 		public override NodeData Serialize()
 		{
 			return new ConditionNodeData(GetPosition().position);
+		}
+
+		public static ConditionNode FromData(ConditionNodeData data)
+		{
+			return new ConditionNode();
 		}
 	}
 }

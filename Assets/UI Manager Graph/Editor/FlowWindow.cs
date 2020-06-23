@@ -1,5 +1,6 @@
 ﻿using Com.Github.Knose1.Flow.Editor.Node;
 using UnityEditor;
+using UnityEditor.SceneManagement;
 using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -25,8 +26,9 @@ namespace Com.Github.Knose1.Flow.Editor
 
 		public virtual void OnEnable()
 		{
-			manager = new FlowGraphManager();
+			OnDisable(); //Just In Case
 
+			manager = new FlowGraphManager();
 			manager.OnSelectionStatusChange += Manager_OnSelectionStatusChange;
 
 			GenerateGraph();
@@ -88,7 +90,9 @@ namespace Com.Github.Knose1.Flow.Editor
 
 		protected void Save()
 		{
+			Debug.Log("["+nameof(FlowWindow)+"] Saving...");
 			graph.SaveIn(manager.Target);
+			Debug.Log("[" + nameof(FlowWindow) + "] Saved !");
 		}
 
 		#region Create
@@ -105,9 +109,13 @@ namespace Com.Github.Knose1.Flow.Editor
 
 		public void OnDisable()
 		{
-			graph.Dispose();
-			rootVisualElement.Remove(graph);
-			manager.Dispose();
+			if (manager != null) manager.OnSelectionStatusChange -= Manager_OnSelectionStatusChange;
+
+			if (graph != null) rootVisualElement.Remove(graph);
+			
+			if (graph != null) graph.Dispose();
+			if (manager != null) manager.Dispose();
+
 		}
 	}
 }
