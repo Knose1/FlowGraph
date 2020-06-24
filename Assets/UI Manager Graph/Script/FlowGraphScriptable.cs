@@ -325,8 +325,20 @@ namespace Com.Github.Knose1.Flow.Engine.Settings.NodeData
 	[Serializable]
 	public class EntryNodeData : NodeData
 	{
-		public EntryNodeData(Vector2 position) : base(position)
+		public enum StartMode
 		{
+			StartOnAwake,
+			StartOnStart,
+			StartOnEnable,
+			Manual
+		}
+		[SerializeField] public StartMode startMode;
+		[SerializeField] public bool generateCallback;
+
+		public EntryNodeData(Vector2 position, StartMode startMode, bool generateCallback) : base(position)
+		{
+			this.startMode = startMode;
+			this.generateCallback = generateCallback;
 		}
 	}
 

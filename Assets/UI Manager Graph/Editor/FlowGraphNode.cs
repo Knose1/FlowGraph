@@ -22,9 +22,6 @@ namespace Com.Github.Knose1.Flow.Editor
 		protected const string INPUT = "Input";
 		protected const string PREVIOUS = "Previous";
 
-		public string GUID;
-		public bool entryPoint;
-
 		protected VisualElement inspectorElement;
 		protected List<Port> _ports = new List<Port>();
 
@@ -37,8 +34,7 @@ namespace Com.Github.Knose1.Flow.Editor
 		protected FlowGraphNode(Vector2 startSize) : base()
 		{
 			SetPosition(new Rect(Vector2.zero, startSize));
-			GUID = Guid.NewGuid().ToString();
-
+			
 			capabilities ^= Capabilities.Collapsible;
 
 			inspectorElement = new VisualElement();
@@ -84,6 +80,12 @@ namespace Com.Github.Knose1.Flow.Editor
 			inspectorElement.style.paddingRight = 3;
 			inspectorElement.style.paddingTop = 3;
 			inspectorElement.style.paddingBottom = 3;
+		}
+
+		protected void CorrectLabel(Label labelElement)
+		{
+			labelElement.style.minWidth = 30;
+			labelElement.style.unityTextAlign = TextAnchor.MiddleLeft;
 		}
 
 		public abstract NodeData Serialize();

@@ -18,22 +18,10 @@ namespace Com.Github.Knose1.Flow.Editor.Node
 
 		public StateNode() : base()
 		{
-			nameField = new TextField("Name");
-			StateName = STATE;
-			nameField.labelElement.style.minWidth = 30;
-			nameField.labelElement.style.unityTextAlign = TextAnchor.MiddleLeft;
-			nameField.style.width = 125;
-
-			nameField.RegisterValueChangedCallback(OnNameFieldChange);
-
-
-			AddInspectorElement(nameField);
-			entryPoint = true;
-
 			capabilities |= Capabilities.Renamable;
-
 			elementTypeColor = Color.cyan;
 
+			//Ports
 			Port output = GeneratePort(Direction.Output, Port.Capacity.Single);
 			output.SetPortName(NEXT);
 			AddOutputElement(output);
@@ -42,6 +30,17 @@ namespace Com.Github.Knose1.Flow.Editor.Node
 			input.SetPortName(PREVIOUS);
 			AddInputElement(input);
 
+			//Fields
+			nameField = new TextField("Name");
+			StateName = STATE; //This also sets the title
+			CorrectLabel(nameField.labelElement);
+			nameField.style.width = 125;
+
+			nameField.RegisterValueChangedCallback(OnNameFieldChange);
+			AddInspectorElement(nameField);
+
+
+			//Refresh
 			RefreshExpandedState();
 			RefreshPorts();
 		}

@@ -28,7 +28,14 @@ namespace Com.Github.Knose1.Flow.Editor
 
 		public void CreateAsset()
 		{
-			throw new NotImplementedException();
+			
+		}
+
+		public void GenerateCode()
+		{
+			EditorUtility.SaveFilePanel(
+				"", "", "", ".cs"
+			);
 		}
 
 		private void Selection_SelectionChanged()

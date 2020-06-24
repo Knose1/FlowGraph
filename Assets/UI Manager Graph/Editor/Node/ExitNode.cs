@@ -11,12 +11,14 @@ namespace Com.Github.Knose1.Flow.Editor.Node
 		public ExitNode() : base()
 		{
 			title = EXIT;
-			entryPoint = true;
+
+			//AddInspectorElement
 
 			capabilities ^= Capabilities.Deletable;
 
 			elementTypeColor = Color.red;
 
+			//Setup port
 			Port port = GeneratePort(Direction.Input, Port.Capacity.Multi);
 			port.SetPortName(PREVIOUS);
 

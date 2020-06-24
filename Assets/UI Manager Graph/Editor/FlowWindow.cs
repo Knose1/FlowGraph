@@ -1,4 +1,5 @@
 ﻿using Com.Github.Knose1.Flow.Editor.Node;
+using System;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEditor.UIElements;
@@ -72,10 +73,18 @@ namespace Com.Github.Knose1.Flow.Editor
 			createScreenNode.text = "+State Node";
 			toolbar.Add(createScreenNode);
 
-			//Save
+			//Middle
 			VisualElement middle = new VisualElement();
 			middle.name = "Middle";
 			toolbar.Add(middle);
+
+			middle.style.flexGrow = 1;
+
+			//Minimap
+			ToolbarToggle minimapToggle = new ToolbarToggle();
+			minimapToggle.RegisterValueChangedCallback(MinimapToggleChange);
+			minimapToggle.text = "Toggle minimap";
+			toolbar.Add(minimapToggle);
 
 			middle.style.flexGrow = 1;
 
@@ -86,6 +95,11 @@ namespace Com.Github.Knose1.Flow.Editor
 
 
 			rootVisualElement.Add(toolbar);
+		}
+
+		private void MinimapToggleChange(ChangeEvent<bool> evt)
+		{
+			graph.ToggleMinimap(evt.newValue);
 		}
 
 		protected void Save()

@@ -80,6 +80,7 @@ namespace Com.Github.Knose1.Flow.Editor
 		protected ExitNode exitNode = null;
 		//protected List<FlowGraphNode> graphNodes = new List<FlowGraphNode>();
 		protected FlowGraphManager manager;
+		private MiniMap miniMap;
 
 
 		/*//////////////////////////////////////*/
@@ -93,6 +94,7 @@ namespace Com.Github.Knose1.Flow.Editor
 		{
 			SetupGraph();
 
+			miniMap = new MiniMap();
 			this.manager = manager;
 			manager.OnDataChange += Manager_OnDataChange;
 
@@ -130,6 +132,20 @@ namespace Com.Github.Knose1.Flow.Editor
 		public void RemoveNode(FlowGraphNode node)
 		{
 			RemoveElement(node);
+		}
+
+		public void ToggleMinimap(bool show)
+		{
+			if (show)
+			{
+				Add(miniMap);
+				Vector2 mapSize = new Vector2(200, 180);
+				Vector2 mapPos = new Vector2(parent.contentRect.width - mapSize.x, parent.contentRect.height - mapSize.y);
+				miniMap.SetPosition(new Rect(mapPos, mapSize));
+				miniMap.anchored = false;
+				miniMap.elementTypeColor = new Color(1, 0, 1);
+			}
+			else Remove(miniMap);
 		}
 
 		/*//////////////////////////////////////*/
@@ -406,7 +422,7 @@ namespace Com.Github.Knose1.Flow.Editor
 			GridBackground gridBackground = new GridBackground();
 			Insert(0, gridBackground);
 			gridBackground.StretchToParentSize();
-			
+
 			serializeGraphElements -= SerializeGraphElements;
 			unserializeAndPaste -= UnserializeAndPasteOperation;
 

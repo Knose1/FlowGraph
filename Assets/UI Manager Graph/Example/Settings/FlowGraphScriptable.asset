@@ -14,19 +14,22 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   nodes:
     entryNode:
-      position: {x: -62, y: -3}
+      position: {x: 37, y: 0}
       _isNotNull: 1
     exitNode:
-      position: {x: 500, y: 201}
+      position: {x: 700, y: 0}
       _isNotNull: 1
     stateNodes:
-    - position: {x: 166, y: -61}
+    - position: {x: 298, y: -76}
       _isNotNull: 1
-      name: State
+      name: Menu
+    - position: {x: 232, y: -176}
+      _isNotNull: 1
+      name: Titlecard
     conditionNodes: []
     connections:
     - input:
-        nodeId: 2
+        nodeId: 3
         portId: 1
       output:
         nodeId: 0
@@ -36,4 +39,10 @@ MonoBehaviour:
         portId: 0
       output:
         nodeId: 2
+        portId: 0
+    - input:
+        nodeId: 2
+        portId: 1
+      output:
+        nodeId: 3
         portId: 0

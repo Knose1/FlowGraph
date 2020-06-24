@@ -13,7 +13,6 @@ namespace Com.Github.Knose1.Flow.Editor.Node
 		public ConditionNode() : base()
 		{
 			title = CONDITION;
-			entryPoint = true;
 
 			elementTypeColor = Color.green;
 
