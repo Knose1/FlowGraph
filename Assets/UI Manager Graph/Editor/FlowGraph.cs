@@ -327,8 +327,18 @@ namespace Com.Github.Knose1.Flow.Editor
 
 				if (!inputNode || !outputNode) continue;
 
-				Port inputPort = inputNode.graphNode.Ports[input.portId];
-				Port outputPort = outputNode.graphNode.Ports[output.portId];
+				Port inputPort = null;
+				Port outputPort = null;
+				try
+				{
+					inputPort = inputNode.graphNode.Ports[input.portId];
+					outputPort = outputNode.graphNode.Ports[output.portId];
+				}
+				catch (Exception)
+				{
+					Debug.LogWarning("Port not found");
+					continue;
+				}
 
 				Edge edge = inputPort.ConnectTo(outputPort);
 				AddElement(edge);

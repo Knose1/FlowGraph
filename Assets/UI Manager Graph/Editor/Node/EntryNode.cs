@@ -11,58 +11,72 @@ namespace Com.Github.Knose1.Flow.Editor.Node
 	{
 		protected const string ENTRY = "Entry";
 
-		private EnumField startField;
-		public EntryNodeData.StartMode Start
+		private TextElement generatedClassTextElement;
+
+		private TextField namespaceField;
+		public string Namespace
 		{
-			get => (EntryNodeData.StartMode)startField.value;
-			set => startField.value = value;
+			get => namespaceField.value;
+			set => namespaceField.value = value;
 		}
 
-		private Toggle generateCallbackField;
-		public bool GenerateCallback
+		private TextField classField;
+		public string Class
 		{
-			get => generateCallbackField.value;
-			set => generateCallbackField.value = value;
+			get => classField.value;
+			set => classField.value = value;
 		}
 
 		public EntryNode() : base()
 		{
 			title = ENTRY;
 			capabilities ^= Capabilities.Deletable;
-			elementTypeColor = Color.red;
+			SetTopColor(elementTypeColor = Color.red);
+		}
 
-			//Port
+		protected override void SetupPorts()
+		{
 			Port port = GeneratePort(Direction.Output);
 			port.SetPortName(NEXT);
-
+			
 			AddOutputElement(port);
+		}
 
-			//Fields
-			startField = new EnumField("Start", EntryNodeData.StartMode.StartOnAwake); 
-			CorrectLabel(startField.labelElement);
-			startField.style.width = 125;
-			AddInspectorElement(startField);
+		protected override void SetupFields()
+		{
+			generatedClassTextElement = new TextElement();
+			generatedClassTextElement.tooltip = "The class that will be generated";
+			generatedClassTextElement.text = "Generated class";
+			UIManagerGraphNodeExtend.CorrectText(generatedClassTextElement);
+			AddInspectorElement(generatedClassTextElement);
 
-			generateCallbackField = new Toggle("Generate Callback"); 
-			CorrectLabel(generateCallbackField.labelElement);
-			generateCallbackField.style.width = 125;
-			AddInspectorElement(generateCallbackField);
+			//Namespace field
+			namespaceField = new TextField("Namespace");
+			namespaceField.tooltip = "The namespace of the class";
+			UIManagerGraphNodeExtend.CorrectLabel(namespaceField.labelElement);
+			namespaceField.style.width = 250;
+			UIManagerGraphNodeExtend.Indent(namespaceField);
+			AddInspectorElement(namespaceField);
 
-			//Refresh
-			RefreshExpandedState();
-			RefreshPorts();
+			//Class field
+			classField = new TextField("Class");
+			classField.tooltip = "The name of the class to use ( new MyNamespace.MyClass() )";
+			UIManagerGraphNodeExtend.CorrectLabel(classField.labelElement);
+			classField.style.width = 160;
+			UIManagerGraphNodeExtend.Indent(classField);
+			AddInspectorElement(classField);
 		}
 
 		public override NodeData Serialize()
 		{
-			return new EntryNodeData(GetPosition().position, Start, GenerateCallback);
+			return new EntryNodeData(GetPosition().position, Namespace, Class);
 		}
 
 		public static EntryNode FromData(EntryNodeData data)
 		{
 			EntryNode node = new EntryNode();
-			node.Start = data.startMode;
-			node.GenerateCallback = data.generateCallback;
+			node.Class = data.@class;
+			node.Namespace = data.@namespace;
 			return node;
 		}
 	}

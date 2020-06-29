@@ -17,13 +17,14 @@ namespace Com.Github.Knose1.Flow.Editor
 	/// </summary>
 	public abstract class FlowGraphNode : UnityEditor.Experimental.GraphView.Node
 	{
+		private const int TITLE_BORDER_TOP_WIDTH = 2;
+
 		protected const string NEXT = "Next";
 		protected const string OUTPUT = "Output";
 		protected const string INPUT = "Input";
 		protected const string PREVIOUS = "Previous";
-
 		protected VisualElement inspectorElement;
-		protected List<Port> _ports = new List<Port>();
+		private List<Port> _ports = new List<Port>();
 
 		/// <summary>
 		/// Node's ports
@@ -43,9 +44,23 @@ namespace Com.Github.Knose1.Flow.Editor
 
 			titleButtonContainer.parent.Remove(titleButtonContainer);
 
+			SetupPorts();
+			SetupFields();
+
 			RefreshExpandedState();
 			RefreshPorts();
 
+		}
+
+		protected void RemoveTopColor()
+		{
+			titleContainer.style.borderTopWidth = 0;
+		}
+
+		protected void SetTopColor(Color color)
+		{
+			titleContainer.style.borderColor = color;
+			titleContainer.style.borderTopWidth = TITLE_BORDER_TOP_WIDTH;
 		}
 
 		protected Port GeneratePort(Direction direction, Port.Capacity capacity = Port.Capacity.Single)
@@ -67,9 +82,21 @@ namespace Com.Github.Knose1.Flow.Editor
 			outputContainer.Add(elm);
 		}
 
-		protected void AddInputElement(VisualElement elm)
+		protected void RemoveOutputElement(VisualElement elm)
 		{
-			inputContainer.Add(elm);
+			if (!outputContainer.Contains(elm)) return;
+			outputContainer.Remove(elm);
+		}
+
+		protected void AddInputElement(Port port)
+		{
+			inputContainer.Add(port);
+		}
+
+		protected void RemoveInputElement(Port port)
+		{
+			_ports.Remove(port);
+			inputContainer.Remove(port);
 		}
 
 		protected void AddInspectorElement(VisualElement elm)
@@ -82,18 +109,30 @@ namespace Com.Github.Knose1.Flow.Editor
 			inspectorElement.style.paddingBottom = 3;
 		}
 
-		protected void CorrectLabel(Label labelElement)
+		protected void RemoveInspectorElement(VisualElement elm)
 		{
-			labelElement.style.minWidth = 30;
-			labelElement.style.unityTextAlign = TextAnchor.MiddleLeft;
+			if (!inspectorElement.Contains(elm)) return;
+
+			inspectorElement.Remove(elm);
+
+			if (inspectorElement.childCount != 0) return;
+
+			inspectorElement.style.paddingLeft = 0;
+			inspectorElement.style.paddingRight = 0;
+			inspectorElement.style.paddingTop = 0;
+			inspectorElement.style.paddingBottom = 0;
 		}
 
-		public abstract NodeData Serialize();
+		protected virtual void SetupPorts()	 { }
+		protected virtual void SetupFields() { }
 
+		public abstract NodeData Serialize();
 	}
 
 	public static class UIManagerGraphNodeExtend
 	{
+		public const int INDENTATION_SIZE = 10;
+
 		public static T SetPositionFromData<T>(this T node, Vector2 position) where T : FlowGraphNode
 		{
 			Rect pos = node.GetPosition();
@@ -105,6 +144,35 @@ namespace Com.Github.Knose1.Flow.Editor
 		public static void SetPortName(this Port port, string name)
 		{
 			port.portName = name;
+		}
+
+		public static void CorrectLabel(Label labelElement)
+		{
+			labelElement.style.minWidth = 30;
+			labelElement.style.unityTextAlign = TextAnchor.MiddleLeft;
+		}
+
+		public static void CorrectText(TextElement txt)
+		{
+			txt.style.height = 16;
+			txt.style.marginTop = 0;
+			txt.style.marginBottom = 2;
+			txt.style.marginLeft = 2;
+		}
+
+		public static void CorrectToggle(VisualElement elm)
+		{
+			elm.style.marginBottom = 2;
+		}
+
+		/// <summary>
+		/// Warning : This methode modify the value of <see cref="VisualElement.style.marginLeft"/>
+		/// </summary>
+		/// <param name="elm"></param>
+		/// <param name="indentationCount"></param>
+		public static void Indent(VisualElement elm, int indentationCount = 1, bool relatif = true)
+		{
+			elm.style.marginLeft = (relatif ? elm.style.marginLeft.value.value : 0) + indentationCount * INDENTATION_SIZE;
 		}
 	}
 }

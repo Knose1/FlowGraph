@@ -1,6 +1,7 @@
 ﻿using Com.Github.Knose1.Flow.Engine.Settings.NodeData;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using UnityEngine;
 
 namespace Com.Github.Knose1.Flow.Engine.Settings
@@ -31,7 +32,7 @@ namespace Com.Github.Knose1.Flow.Engine.Settings
 		public EntryNodeData entryNode;
 		public ExitNodeData exitNode;
 		public List<StateNodeData> stateNodes;
-		public List<ConditionNodeData> conditionNodes;
+		/* Condition Nodes are deprecated */[NonSerialized] public List<ConditionNodeData> conditionNodes;
 
 		/// <summary>
 		/// Connections between the Nodes
@@ -325,31 +326,56 @@ namespace Com.Github.Knose1.Flow.Engine.Settings.NodeData
 	[Serializable]
 	public class EntryNodeData : NodeData
 	{
-		public enum StartMode
-		{
-			StartOnAwake,
-			StartOnStart,
-			StartOnEnable,
-			Manual
-		}
-		[SerializeField] public StartMode startMode;
-		[SerializeField] public bool generateCallback;
+		[SerializeField] public string @namespace;
+		[SerializeField] public string @class;
 
-		public EntryNodeData(Vector2 position, StartMode startMode, bool generateCallback) : base(position)
+		public EntryNodeData(Vector2 position, string @namespace, string @class) : base(position)
 		{
-			this.startMode = startMode;
-			this.generateCallback = generateCallback;
+			this.@namespace = @namespace;
+			this.@class = @class;
 		}
 	}
 
 	[Serializable]
 	public class StateNodeData : NodeData
 	{
-		[SerializeField] public string name;
+		public static string GetEventName(string evtBase)
+		{
+			TextInfo txtInfo = new CultureInfo("en-us", false).TextInfo;
+			evtBase = txtInfo.ToTitleCase(evtBase).Replace("_", string.Empty).Replace(" ", string.Empty);
+			return "On"+evtBase;
+		}
 
-		public StateNodeData(Vector2 position, string name) : base(position)
+		public enum Execution
+		{
+			Instantiate,
+			Constructor,
+			Event
+		}
+
+		[SerializeField] public string name;
+		[SerializeField] public Execution executionMode;
+		[SerializeField] public string @namespace;
+		[SerializeField] public string @class;
+		[SerializeField] public GameObject prefab = null;
+		[SerializeField] public bool generateEvent;
+		[SerializeField] public List<StateNodePort> ports;
+
+		public StateNodeData(Vector2 position, string name, Execution executionMode, string @namespace, string @class, GameObject prefab, bool generateEvent, List<StateNodePort> ports) : base(position)
 		{
 			this.name = name;
+			this.executionMode = executionMode;
+			this.@namespace = @namespace;
+			this.@class = @class;
+			this.prefab = prefab;
+			this.generateEvent = generateEvent;
+			this.ports = ports;
+		}
+
+		[Serializable]
+		public class StateNodePort
+		{
+			[SerializeField] public string trigger;
 		}
 	}
 

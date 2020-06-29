@@ -28,7 +28,7 @@ namespace Com.Github.Knose1.Flow.Editor
 
 		public void CreateAsset()
 		{
-			
+			throw new NotImplementedException();
 		}
 
 		public void GenerateCode()
@@ -40,17 +40,20 @@ namespace Com.Github.Knose1.Flow.Editor
 
 		private void Selection_SelectionChanged()
 		{
-			_target = null;
-
 			int length = Selection.assetGUIDs.Length;
 			if (length > 1)
 			{
+				_target = null;
+
 				OnSelectionStatusChange?.Invoke(Status.MultipleEdit);
 				OnDataChange?.Invoke();
 				return;
 			}
+
 			if (length == 0)
 			{
+				if (_target != null) return;
+
 				OnSelectionStatusChange?.Invoke(Status.NotSelected);
 				OnDataChange?.Invoke();
 				return;
@@ -59,6 +62,8 @@ namespace Com.Github.Knose1.Flow.Editor
 			UnityEngine.Object obj = AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(AssetDatabase.GUIDToAssetPath(Selection.assetGUIDs[0]));
 			if (!(obj is FlowGraphScriptable))
 			{
+				if (_target != null) return;
+
 				OnSelectionStatusChange?.Invoke(Status.NotSelected);
 				OnDataChange?.Invoke();
 				return;
