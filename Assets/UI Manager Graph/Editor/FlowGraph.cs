@@ -30,7 +30,7 @@ namespace Com.Github.Knose1.Flow.Editor
 				int count = 0;
 				for (int i = selection.Count - 1; i >= 0; i--)
 				{
-					if (selection[i] is FlowGraphNode) ++count;
+					if (selection[i] is UnityEditor.Experimental.GraphView.Node) ++count;
 				}
 
 				bool containsEntry = selection.Contains(entryNode);
@@ -45,9 +45,9 @@ namespace Com.Github.Knose1.Flow.Editor
 			{
 				for (int i = selection.Count - 1; i >= 0; i--)
 				{
-					FlowGraphNode node = selection[i] as FlowGraphNode;
+					UnityEditor.Experimental.GraphView.Node node = selection[i] as UnityEditor.Experimental.GraphView.Node;
 
-					if (node.capabilities != Capabilities.Deletable) return false;
+					if (node == null || node.capabilities != Capabilities.Deletable) return false;
 				}
 
 				return true;
@@ -78,9 +78,9 @@ namespace Com.Github.Knose1.Flow.Editor
 
 		protected EntryNode entryNode = null;
 		protected ExitNode exitNode = null;
-		//protected List<FlowGraphNode> graphNodes = new List<FlowGraphNode>();
 		protected FlowGraphManager manager;
 		private MiniMap miniMap;
+		private StyleSheet styleSheet;
 
 
 		/*//////////////////////////////////////*/
@@ -97,7 +97,6 @@ namespace Com.Github.Knose1.Flow.Editor
 			miniMap = new MiniMap();
 			this.manager = manager;
 			manager.OnDataChange += Manager_OnDataChange;
-
 		}
 
 
@@ -107,6 +106,17 @@ namespace Com.Github.Knose1.Flow.Editor
 		/*                                      */
 		/*//////////////////////////////////////*/
 
+
+		public TokenNode CreateRetoute()
+		{
+			TokenNode node = new TokenNode(
+				Port.Create<Edge>(Orientation.Horizontal, Direction.Input, Port.Capacity.Single, null),
+				Port.Create<Edge>(Orientation.Horizontal, Direction.Output, Port.Capacity.Single, null)
+			);
+			AddNode(node);
+
+			return node;
+		}
 
 		/// <summary>
 		/// Save the graph in a <see cref="FlowGraphScriptable"/>
@@ -122,18 +132,43 @@ namespace Com.Github.Knose1.Flow.Editor
 			target.nodes = GenerateNodeDataList(nodes);
 		}
 
-		public FlowGraphNode CreateNode(FlowGraphNode node, bool relativePosition = true)
+		/// <summary>
+		/// Adds a node on the grid
+		/// </summary>
+		/// <param name="node"></param>
+		/// <param name="relativePosition">If false, the position is absolute on the graph</param>
+		/// <returns></returns>
+		public UnityEditor.Experimental.GraphView.Node AddNode(UnityEditor.Experimental.GraphView.Node node, bool relativePosition = true)
 		{
+			if (relativePosition) 
+			{
+				Vector3 viewScale = viewTransform.scale;
+				Vector3 viewPosition = viewTransform.position;
+				Vector2 viewUpperLeftPosition = new Vector2(viewPosition.x / viewScale.x, viewPosition.y / viewScale.y);
+				Vector2 parentHalfSize = parent.contentRect.center;
+
+				Rect pos = node.GetPosition();
+				pos.position -= viewUpperLeftPosition - parentHalfSize / viewScale;
+				node.SetPosition(pos); 
+			}
 			AddElement(node);
 
 			return node;
 		}
 
-		public void RemoveNode(FlowGraphNode node)
+		/// <summary>
+		/// Remove a node from the grid
+		/// </summary>
+		/// <returns></returns>
+		public void RemoveNode(UnityEditor.Experimental.GraphView.Node node)
 		{
 			RemoveElement(node);
 		}
 
+		/// <summary>
+		/// Show the minimap or not
+		/// </summary>
+		/// <param name="show">If true, show the minimap</param>
 		public void ToggleMinimap(bool show)
 		{
 			if (show)
@@ -175,7 +210,8 @@ namespace Com.Github.Knose1.Flow.Editor
 			///Save nodes
 			for (int i = nodes.Count - 1; i >= 0; i--)
 			{
-				FlowGraphNode graphNode = nodes[i] as FlowGraphNode;
+				UnityEditor.Experimental.GraphView.Node graphNode = nodes[i];
+				if (graphNode == null) continue;
 
 				//Check if the node is on the canvas
 				if (!nodes.Contains(graphNode))
@@ -186,7 +222,14 @@ namespace Com.Github.Knose1.Flow.Editor
 
 				NodeData nodeData = null;
 
-				nodeData = graphNode.Serialize();
+				if (graphNode is FlowGraphNode)
+				{
+					nodeData = (graphNode as FlowGraphNode).Serialize();
+				}
+				else if (graphNode is TokenNode)
+				{
+					nodeData = new  RerouteData(graphNode.GetPosition().position);
+				}
 
 				tempDataAndVisualLinkage.Insert(0, new TempDataAndVisualLinkage(nodeData, graphNode));
 
@@ -196,9 +239,10 @@ namespace Com.Github.Knose1.Flow.Editor
 			///Save connections
 			for (int i = 0; i < tempDataAndVisualLinkage.Count; i++)
 			{
-				FlowGraphNode inputGraphNode = tempDataAndVisualLinkage[i].graphNode;
+				UnityEditor.Experimental.GraphView.Node inputGraphNode = tempDataAndVisualLinkage[i].graphNode;
 
-				List<Port> ports = inputGraphNode.Ports;
+				List<Port> ports = inputGraphNode.GetPorts();
+
 				for (int j = 0; j < ports.Count; j++)
 				{
 					IEnumerator<Edge> inputConnections = ports[j].connections.GetEnumerator();
@@ -210,8 +254,8 @@ namespace Com.Github.Knose1.Flow.Editor
 						Port inputPort = edge.input;
 						Port outputPort = edge.output;
 
-						FlowGraphNode inputNode = inputPort.node as FlowGraphNode;
-						FlowGraphNode outputNode = outputPort.node as FlowGraphNode;
+						UnityEditor.Experimental.GraphView.Node inputNode = inputPort.node;
+						UnityEditor.Experimental.GraphView.Node outputNode = outputPort.node;
 
 						int tempDataInputIndex = tempDataAndVisualLinkage.IndexOf(inputNode);
 						int tempDataOutputIndex = tempDataAndVisualLinkage.IndexOf(outputNode);
@@ -221,8 +265,8 @@ namespace Com.Github.Knose1.Flow.Editor
 						NodeData inputNodeData = tempDataAndVisualLinkage[tempDataInputIndex].nodeData;
 						NodeData outputNodeData = tempDataAndVisualLinkage[tempDataOutputIndex].nodeData;
 
-						int inputPortIndex = inputNode.Ports.IndexOf(inputPort);
-						int outputPortIndex = outputNode.Ports.IndexOf(outputPort);
+						int inputPortIndex = inputNode.GetPorts().IndexOf(inputPort);
+						int outputPortIndex = outputNode.GetPorts().IndexOf(outputPort);
 
 						ConnectorData connection = target.GetConnectorData(inputNodeData, inputPortIndex, outputNodeData, outputPortIndex);
 
@@ -242,8 +286,8 @@ namespace Com.Github.Knose1.Flow.Editor
 		{
 			try
 			{
-				CreateNode(entryNode = GenerateEntryPointNode(), false);
-				CreateNode(exitNode = GenerateExitPointNode(), false);
+				AddNode(entryNode = GenerateEntryPointNode(), false);
+				AddNode(exitNode = GenerateExitPointNode(), false);
 			}
 			catch (Exception err)
 			{
@@ -276,41 +320,46 @@ namespace Com.Github.Knose1.Flow.Editor
 				NodeDataList.NodeAndIndex nodeAndIndex = nodes[i];
 
 				NodeData nodeData = null;
-
-				FlowGraphNode flowGraphNode = null;
+				UnityEditor.Experimental.GraphView.Node node = null;
 
 				if (nodeAndIndex.type == typeof(EntryNodeData)) { 
 					nodeData = target.entryNode;
-					flowGraphNode = entryNode = EntryNode.FromData(nodeData as EntryNodeData);
+					node = entryNode = EntryNode.FromData(nodeData as EntryNodeData);
 				}
 
 				else if (nodeAndIndex.type == typeof(StateNodeData))
 				{
 					nodeData = target.stateNodes[nodeAndIndex.index];
-					flowGraphNode = StateNode.FromData(nodeData as StateNodeData);
+					node = StateNode.FromData(nodeData as StateNodeData);
 				}
 
 				else if (nodeAndIndex.type == typeof(ExitNodeData)) 
 				{
 					nodeData = target.exitNode;
-					flowGraphNode = exitNode = ExitNode.FromData(nodeData as ExitNodeData);
+					node = exitNode = ExitNode.FromData(nodeData as ExitNodeData);
 				}
 
 				else if (nodeAndIndex.type == typeof(ConditionNodeData)) 
 				{
 					nodeData = target.conditionNodes[nodeAndIndex.index];
-					flowGraphNode = ConditionNode.FromData(nodeData as ConditionNodeData);
+					node = ConditionNode.FromData(nodeData as ConditionNodeData);
 				}
 
-				if (flowGraphNode != null)
+				else if (nodeAndIndex.type == typeof(RerouteData))
 				{
-					flowGraphNode.SetPositionFromData(nodeAndIndex.position + offsetPosition);
-					CreateNode(flowGraphNode);
-
-					selectables.Add(flowGraphNode);
+					nodeData = target.reroute[nodeAndIndex.index];
+					node = CreateRetoute();
 				}
 
-				tempDataAndVisualLinkage.Add(new TempDataAndVisualLinkage(nodeData, flowGraphNode));
+				if (node != null)
+				{
+					node.SetPositionFromData(nodeAndIndex.position + offsetPosition);
+					AddNode(node, false);
+
+					selectables.Add(node);
+				}
+
+				tempDataAndVisualLinkage.Add(new TempDataAndVisualLinkage(nodeData, node));
 			}
 
 			//Connect them
@@ -327,12 +376,12 @@ namespace Com.Github.Knose1.Flow.Editor
 
 				if (!inputNode || !outputNode) continue;
 
-				Port inputPort = null;
-				Port outputPort = null;
+				Port inputPort;
+				Port outputPort;
 				try
 				{
-					inputPort = inputNode.graphNode.Ports[input.portId];
-					outputPort = outputNode.graphNode.Ports[output.portId];
+					inputPort = inputNode.graphNode.GetPorts()[input.portId];
+					outputPort = outputNode.graphNode.GetPorts()[output.portId];
 				}
 				catch (Exception)
 				{
@@ -340,7 +389,7 @@ namespace Com.Github.Knose1.Flow.Editor
 					continue;
 				}
 
-				Edge edge = inputPort.ConnectTo(outputPort);
+				Edge edge = inputPort.ConnectTo<Edge>(outputPort);
 				AddElement(edge);
 				selectables.Add(edge);
 			}
@@ -350,7 +399,7 @@ namespace Com.Github.Knose1.Flow.Editor
 
 		/*//////////////////////////////////////*/
 		/*                                      */
-		/*           Private Methods            */
+		/*           Event Handelers            */
 		/*                                      */
 		/*//////////////////////////////////////*/
 		
@@ -380,6 +429,12 @@ namespace Com.Github.Knose1.Flow.Editor
 			GenerateGraphFromDatas(manager.Target.nodes, nodes);
 		}
 
+		/*//////////////////////////////////////*/
+		/*                                      */
+		/*           Private Methods            */
+		/*                                      */
+		/*//////////////////////////////////////*/
+
 		/// <summary>
 		/// Remove all elements on the graph
 		/// </summary>
@@ -399,7 +454,6 @@ namespace Com.Github.Knose1.Flow.Editor
 		/// </summary>
 		private void SetupGraph()
 		{
-			StyleSheet styleSheet = null;
 			try
 			{
 				//Load
@@ -437,8 +491,9 @@ namespace Com.Github.Knose1.Flow.Editor
 			unserializeAndPaste -= UnserializeAndPasteOperation;
 
 			serializeGraphElements += SerializeGraphElementsAsNodeDataList;
-			unserializeAndPaste += UnserializeAndPastNodeDataList;
+			unserializeAndPaste += UnserializeAndPasteNodeDataList;
 		}
+		
 		/// <summary>
 		/// Util function when generating New Graph
 		/// </summary>
@@ -464,13 +519,19 @@ namespace Com.Github.Knose1.Flow.Editor
 
 			return node;
 		}
-		
+
 		/*//////////////////////////////////////*/
 		/*                                      */
 		/*  Serialize and Unserialize Methods   */
 		/*                                      */
 		/*//////////////////////////////////////*/
 
+		/// <summary>
+		/// Method for serializing graph elements for copy/paste and other actions.<br/><br/>
+		/// See : <see cref="GraphView.serializeGraphElements"/>
+		/// </summary>
+		/// <param name="elements"></param>
+		/// <returns></returns>
 		protected string SerializeGraphElementsAsNodeDataList(IEnumerable<GraphElement> elements)
 		{
 			List<Edge> edges = new List<Edge>();
@@ -482,13 +543,23 @@ namespace Com.Github.Knose1.Flow.Editor
 			{
 				if (enumerator.Current is Edge) edges.Add(enumerator.Current as Edge);
 				else if (enumerator.Current is FlowGraphNode && !(enumerator.Current is IUnique)) nodes.Add(enumerator.Current as FlowGraphNode);
+				else if (enumerator.Current is TokenNode)
+				{
+					nodes.Add(enumerator.Current as TokenNode);
+				}
 			}
 
 			NodeDataList datas = GenerateNodeDataList(nodes, edges);
 			return JsonUtility.ToJson(datas);
 		}
 
-		protected void UnserializeAndPastNodeDataList(string operationName, string data)
+		/// <summary>
+		/// Method for unserializing graph elements for copy/paste and other actions.<br/><br/>
+		/// See : <see cref="GraphView.unserializeAndPaste"/>
+		/// </summary>
+		/// <param name="elements"></param>
+		/// <returns></returns>
+		protected void UnserializeAndPasteNodeDataList(string operationName, string data)
 		{
 			List<ISelectable> selection = this.selection.ToList();
 			foreach (ISelectable selectionItem in selection)
@@ -511,11 +582,11 @@ namespace Com.Github.Knose1.Flow.Editor
 		/*//////////////////////////////////////*/
 
 		/// <summary>
-		/// 
+		/// Get all ports compatible with given port.
 		/// </summary>
-		/// <param name="startPort"></param>
-		/// <param name="nodeAdapter"></param>
-		/// <returns></returns>
+		/// <param name="startPort">Start port to validate against.</param>
+		/// <param name="nodeAdapter">Node adapter.</param>
+		/// <returns>List of compatible ports.</returns>
 		public override List<Port> GetCompatiblePorts(Port startPort, NodeAdapter nodeAdapter)
 		{
 			List<Port> compatiblePorts = new List<Port>();
@@ -552,8 +623,12 @@ namespace Com.Github.Knose1.Flow.Editor
 		/*                                      */
 		/*//////////////////////////////////////*/
 
+		/// <summary>
+		/// Destroy the instance and Unregister all calback
+		/// </summary>
 		public void Dispose()
 		{
+			Resources.UnloadAsset(styleSheet);
 			manager.OnDataChange -= Manager_OnDataChange;
 		}
 	}
@@ -571,9 +646,9 @@ namespace Com.Github.Knose1.Flow.Editor
 		/// <summary>
 		/// The visual for the node
 		/// </summary>
-		public FlowGraphNode graphNode;
+		public UnityEditor.Experimental.GraphView.Node graphNode;
 
-		public TempDataAndVisualLinkage(NodeData nodeData, FlowGraphNode graphNode)
+		public TempDataAndVisualLinkage(NodeData nodeData, UnityEditor.Experimental.GraphView.Node graphNode)
 		{
 			this.nodeData = nodeData;
 			this.graphNode = graphNode;
@@ -584,6 +659,12 @@ namespace Com.Github.Knose1.Flow.Editor
 
 	internal static class HelperTempDataAndVisualLinkage
 	{
+		/// <summary>
+		/// Get the index of a <see cref="TempDataAndVisualLinkage"/> in a List by its <see cref="NodeData"/>.
+		/// </summary>
+		/// <param name="t">This</param>
+		/// <param name="nodeData">The <see cref="NodeData"/> to find in the list</param>
+		/// <returns></returns>
 		public static int IndexOf(this List<TempDataAndVisualLinkage> t, NodeData nodeData)
 		{
 			int count = t.Count;
@@ -596,7 +677,13 @@ namespace Com.Github.Knose1.Flow.Editor
 			return -1;
 		}
 
-		public static int IndexOf(this List<TempDataAndVisualLinkage> t, FlowGraphNode graphNode)
+		/// <summary>
+		/// Get the index of a <see cref="TempDataAndVisualLinkage"/> in a List by its <see cref="UnityEditor.Experimental.GraphView.Node"/>.
+		/// </summary>
+		/// <param name="t">This</param>
+		/// <param name="graphNode">The <see cref="UnityEditor.Experimental.GraphView.Node"/> to find in the list</param>
+		/// <returns></returns>
+		public static int IndexOf(this List<TempDataAndVisualLinkage> t, UnityEditor.Experimental.GraphView.Node graphNode)
 		{
 			int count = t.Count;
 			for (int i = 0; i < count; i++)
@@ -605,6 +692,41 @@ namespace Com.Github.Knose1.Flow.Editor
 			}
 
 			return -1;
+		}
+	}
+
+	public static class NodeHelper
+	{
+		/// <summary >
+		/// Get all the <see cref="Port"/>s in a <see cref="UnityEditor.Experimental.GraphView.Node"/><br/>
+		/// All the <see cref="Port"/>s returned are children of those containers :<br/>
+		/// - <see cref="UnityEditor.Experimental.GraphView.Node.inputContainer"/><br/>
+		/// - <see cref="UnityEditor.Experimental.GraphView.Node.outputContainer"/><br/>
+		/// <br/>
+		/// If the <see cref="UnityEditor.Experimental.GraphView.Node"/> is a <see cref="FlowGraphNode"/>, returns <see cref="FlowGraphNode.Ports"/><br/>
+		/// </summary>
+		/// <param name="node">This</param>
+		/// <returns></returns>
+		public static List<Port> GetPorts(this UnityEditor.Experimental.GraphView.Node node) 
+		{
+			if (node is FlowGraphNode) return (node as FlowGraphNode).Ports;
+
+			List<Port> ports = new List<Port>();
+
+			IEnumerator<VisualElement> inputEnumerable = node.inputContainer.Children().GetEnumerator();
+			IEnumerator<VisualElement> outputEnumerable = node.outputContainer.Children().GetEnumerator();
+
+			while (inputEnumerable.MoveNext())
+			{
+				if (inputEnumerable.Current != null && inputEnumerable.Current is Port) ports.Add(inputEnumerable.Current as Port);
+			}
+
+			while (outputEnumerable.MoveNext())
+			{
+				if (outputEnumerable.Current != null && outputEnumerable.Current is Port) ports.Add(outputEnumerable.Current as Port);
+			}
+
+			return ports;
 		}
 	}
 }

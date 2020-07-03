@@ -116,7 +116,9 @@ namespace Com.Github.Knose1.Flow.Editor.Node
 		//                                       //
 		//*/////////////////////////////////////*//
 		protected const string STATE = "State";
-
+		protected Color INSTANTIATE_COLOR = Color.cyan;
+		protected Color CONSTRUCTOR_COLOR = new Color(0.6f, 1f,0.6f);
+		protected Color EVENT_COLOR = new Color(177/255f, 160/255f, 246/255f);
 
 		//*/////////////////////////////////////*//
 		//                                       //
@@ -191,7 +193,6 @@ namespace Com.Github.Knose1.Flow.Editor.Node
 		public StateNode() : base()
 		{
 			capabilities |= Capabilities.Renamable;
-			SetTopColor(elementTypeColor = Color.cyan);
 		}
 
 
@@ -296,7 +297,7 @@ namespace Com.Github.Knose1.Flow.Editor.Node
 		//*/////////////////////////////////////*//
 		private void StateOutput_OnDestroy(StateOutputPort obj)
 		{
-			Ports.Remove(obj.Port);
+			RemovePort(obj.Port);
 			stateOutputPorts.Remove(obj);
 			RemoveOutputElement(obj);
 		}
@@ -322,6 +323,7 @@ namespace Com.Github.Knose1.Flow.Editor.Node
 				case StateNodeData.Execution.Constructor:
 					UIManagerGraphNodeExtend.CorrectText(eventTextElement);
 					UIManagerGraphNodeExtend.Indent(eventTextElement, 2);
+					SetNodeColor(CONSTRUCTOR_COLOR);
 
 					AddInspectorElement(namespaceField);
 					AddInspectorElement(classField);
@@ -330,6 +332,7 @@ namespace Com.Github.Knose1.Flow.Editor.Node
 				case StateNodeData.Execution.Instantiate:
 					UIManagerGraphNodeExtend.CorrectText(eventTextElement);
 					UIManagerGraphNodeExtend.Indent(eventTextElement, 2);
+					SetNodeColor(INSTANTIATE_COLOR);
 
 					AddInspectorElement(prefabField);
 					AddInspectorElement(generateEventField);
@@ -337,6 +340,8 @@ namespace Com.Github.Knose1.Flow.Editor.Node
 				case StateNodeData.Execution.Event:
 					UIManagerGraphNodeExtend.CorrectText(eventTextElement);
 					UIManagerGraphNodeExtend.Indent(eventTextElement, 1);
+					SetNodeColor(EVENT_COLOR);
+
 					AddInspectorElement(eventTextElement);
 					return;
 

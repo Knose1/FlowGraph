@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Text.RegularExpressions;
 using UnityEngine;
 
 namespace Com.Github.Knose1.Flow.Engine.Settings
@@ -32,7 +33,9 @@ namespace Com.Github.Knose1.Flow.Engine.Settings
 		public EntryNodeData entryNode;
 		public ExitNodeData exitNode;
 		public List<StateNodeData> stateNodes;
-		/* Condition Nodes are deprecated */[NonSerialized] public List<ConditionNodeData> conditionNodes;
+		public List<RerouteData> reroute;
+		/* Condition Nodes are deprecated */
+		[NonSerialized] public List<ConditionNodeData> conditionNodes;
 
 		/// <summary>
 		/// Connections between the Nodes
@@ -44,12 +47,14 @@ namespace Com.Github.Knose1.Flow.Engine.Settings
 			ClearAllDatas();
 		}
 
-		public NodeDataList(EntryNodeData entryNode, ExitNodeData exitNode, List<StateNodeData> stateNodes, List<ConditionNodeData> conditionNodes, List<ConnectorData> connections)
+		public NodeDataList(EntryNodeData entryNode, ExitNodeData exitNode, List<StateNodeData> stateNodes, List<ConditionNodeData> conditionNodes, List<RerouteData> reroute, List<ConnectorData> connections)
 		{
 			this.entryNode = entryNode;
 			this.exitNode = exitNode;
 			this.stateNodes = stateNodes;
 			this.conditionNodes = conditionNodes;
+			this.reroute = reroute;
+
 			this.connections = connections;
 		}
 
@@ -62,6 +67,7 @@ namespace Com.Github.Knose1.Flow.Engine.Settings
 			exitNode = null;
 			stateNodes = new List<StateNodeData>();
 			conditionNodes = new List<ConditionNodeData>();
+			reroute = new List<RerouteData>();
 
 			connections = new List<ConnectorData>();
 		}
@@ -92,6 +98,11 @@ namespace Com.Github.Knose1.Flow.Engine.Settings
 			{
 				nodes.Add(new NodeAndIndex(i, conditionNodes[i].GetType(), conditionNodes[i].position));
 			}
+
+			for (int i = 0; i < reroute.Count; i++)
+			{
+				nodes.Add(new NodeAndIndex(i, reroute[i].GetType(), reroute[i].position));
+			}
 		}
 
 		/// <summary>
@@ -108,6 +119,7 @@ namespace Com.Github.Knose1.Flow.Engine.Settings
 			nodes.Add(exitNode);
 			nodes.AddRange(stateNodes);
 			nodes.AddRange(conditionNodes);
+			nodes.AddRange(reroute);
 
 			nodes = nodes.FindAll((NodeData.NodeData d) => { return d != null && d.IsNotNull; });
 		}
@@ -129,6 +141,9 @@ namespace Com.Github.Knose1.Flow.Engine.Settings
 
 			else if (nodeData is ConditionNodeData)
 				conditionNodes.Add(nodeData as ConditionNodeData);
+
+			else if (nodeData is RerouteData)
+				reroute.Add(nodeData as RerouteData);
 		}
 
 		/// <summary>
@@ -148,6 +163,9 @@ namespace Com.Github.Knose1.Flow.Engine.Settings
 
 			else if (nodeData is ConditionNodeData)
 				conditionNodes.Insert(0, nodeData as ConditionNodeData);
+
+			else if (nodeData is RerouteData)
+				reroute.Insert(0, nodeData as RerouteData);
 		}
 
 		/// <summary>
@@ -342,6 +360,10 @@ namespace Com.Github.Knose1.Flow.Engine.Settings.NodeData
 		public static string GetEventName(string evtBase)
 		{
 			TextInfo txtInfo = new CultureInfo("en-us", false).TextInfo;
+
+			Regex regex = new Regex("[A-Z]");
+			evtBase = regex.Replace(evtBase, (e) => { return " " + e.Value; });
+
 			evtBase = txtInfo.ToTitleCase(evtBase).Replace("_", string.Empty).Replace(" ", string.Empty);
 			return "On"+evtBase;
 		}
@@ -393,5 +415,11 @@ namespace Com.Github.Knose1.Flow.Engine.Settings.NodeData
 		public ConditionNodeData(Vector2 position) : base(position)
 		{
 		}
+	}
+
+	[Serializable]
+	public class RerouteData : NodeData
+	{
+		public RerouteData(Vector2 position) : base(position){}
 	}
 }

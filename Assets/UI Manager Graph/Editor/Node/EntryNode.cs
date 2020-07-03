@@ -31,7 +31,7 @@ namespace Com.Github.Knose1.Flow.Editor.Node
 		{
 			title = ENTRY;
 			capabilities ^= Capabilities.Deletable;
-			SetTopColor(elementTypeColor = Color.red);
+			SetNodeColor(Color.red);
 		}
 
 		protected override void SetupPorts()

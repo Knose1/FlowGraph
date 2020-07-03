@@ -16,7 +16,7 @@ namespace Com.Github.Knose1.Flow.Editor.Node
 
 			capabilities ^= Capabilities.Deletable;
 
-			SetTopColor(elementTypeColor = Color.yellow);
+			SetNodeColor(Color.yellow);
 
 			//Setup port
 			Port port = GeneratePort(Direction.Input, Port.Capacity.Multi);

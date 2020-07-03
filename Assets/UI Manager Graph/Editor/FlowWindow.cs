@@ -68,10 +68,15 @@ namespace Com.Github.Knose1.Flow.Editor
 			Toolbar toolbar = new Toolbar();
 			toolbar.StretchToParentWidth();
 
-			//Screen Node
+			//Button Screen Node
 			ToolbarButton createScreenNode = new ToolbarButton(CreateStateNode);
 			createScreenNode.text = "+State Node";
 			toolbar.Add(createScreenNode);
+
+			//Button Screen Node
+			ToolbarButton createReroute = new ToolbarButton(CreateRetoute);
+			createReroute.text = "+Reroute";
+			toolbar.Add(createReroute);
 
 			//Middle
 			VisualElement middle = new VisualElement();
@@ -80,7 +85,7 @@ namespace Com.Github.Knose1.Flow.Editor
 
 			middle.style.flexGrow = 1;
 
-			//Minimap
+			//Toggle Minimap
 			ToolbarToggle minimapToggle = new ToolbarToggle();
 			minimapToggle.RegisterValueChangedCallback(MinimapToggleChange);
 			minimapToggle.text = "Toggle minimap";
@@ -97,6 +102,7 @@ namespace Com.Github.Knose1.Flow.Editor
 			rootVisualElement.Add(toolbar);
 		}
 
+
 		private void MinimapToggleChange(ChangeEvent<bool> evt)
 		{
 			graph.ToggleMinimap(evt.newValue);
@@ -110,14 +116,19 @@ namespace Com.Github.Knose1.Flow.Editor
 		}
 
 		#region Create
-		void CreateStateNode()
+		private void CreateStateNode()
 		{
-			graph.CreateNode(new StateNode());
+			graph.AddNode(new StateNode());
 		}
 
-		void CreateConditionNode()
+		private void CreateRetoute()
 		{
-			graph.CreateNode(new ConditionNode());
+			graph.CreateRetoute();
+		}
+
+		private void CreateConditionNode()
+		{
+			graph.AddNode(new ConditionNode());
 		}
 		#endregion
 

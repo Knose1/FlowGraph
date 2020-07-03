@@ -1,6 +1,7 @@
 ﻿using Com.Github.Knose1.Flow.Engine.Settings.NodeData;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -40,6 +41,8 @@ namespace Com.Github.Knose1.Flow.Editor
 
 			inspectorElement = new VisualElement();
 			inspectorElement.name = nameof(inspectorElement);
+			float inspectorColor = 0x28/(float)0xff;
+			inspectorElement.style.backgroundColor = new Color(inspectorColor, inspectorColor, inspectorColor, 0.8f);
 			topContainer.Insert(1, inspectorElement);
 
 			titleButtonContainer.parent.Remove(titleButtonContainer);
@@ -49,7 +52,6 @@ namespace Com.Github.Knose1.Flow.Editor
 
 			RefreshExpandedState();
 			RefreshPorts();
-
 		}
 
 		protected void RemoveTopColor()
@@ -57,10 +59,11 @@ namespace Com.Github.Knose1.Flow.Editor
 			titleContainer.style.borderTopWidth = 0;
 		}
 
-		protected void SetTopColor(Color color)
+		protected void SetNodeColor(Color color)
 		{
 			titleContainer.style.borderColor = color;
 			titleContainer.style.borderTopWidth = TITLE_BORDER_TOP_WIDTH;
+			elementTypeColor = color;
 		}
 
 		protected Port GeneratePort(Direction direction, Port.Capacity capacity = Port.Capacity.Single)
@@ -88,15 +91,21 @@ namespace Com.Github.Knose1.Flow.Editor
 			outputContainer.Remove(elm);
 		}
 
-		protected void AddInputElement(Port port)
+		protected void AddInputElement(VisualElement elm)
 		{
-			inputContainer.Add(port);
+			inputContainer.Add(elm);
 		}
 
-		protected void RemoveInputElement(Port port)
+		protected void RemoveInputElement(VisualElement elm)
+		{
+			inputContainer.Remove(elm);
+		}
+
+		protected void RemovePort(Port port)
 		{
 			_ports.Remove(port);
-			inputContainer.Remove(port);
+			List<Edge> connections = port.connections.ToList();
+			connections.ForEach(port.Disconnect);
 		}
 
 		protected void AddInspectorElement(VisualElement elm)
@@ -133,7 +142,7 @@ namespace Com.Github.Knose1.Flow.Editor
 	{
 		public const int INDENTATION_SIZE = 10;
 
-		public static T SetPositionFromData<T>(this T node, Vector2 position) where T : FlowGraphNode
+		public static T SetPositionFromData<T>(this T node, Vector2 position) where T : UnityEditor.Experimental.GraphView.Node
 		{
 			Rect pos = node.GetPosition();
 			pos.position = position;
