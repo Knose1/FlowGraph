@@ -14,24 +14,25 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   nodes:
     entryNode:
-      position: {x: -378, y: -383}
+      position: {x: -231, y: -45}
       _isNotNull: 1
-      namespace: Hi
-      class: OwO
+      namespace: Com.Github.Knose1.Flow.Example
+      class: UIManager
     exitNode:
-      position: {x: 649, y: -717}
+      position: {x: 1380, y: -37}
       _isNotNull: 1
     stateNodes:
-    - position: {x: -105, y: -228}
+    - position: {x: 566, y: -64}
       _isNotNull: 1
-      name: Titlecard
+      name: Menu
       executionMode: 0
-      namespace: 
-      class: 
+      namespace: Work
+      class: Hard
       prefab: {fileID: 0}
-      generateEvent: 1
-      ports: []
-    - position: {x: 508, y: -537}
+      generateEvent: 0
+      ports:
+      - trigger: 
+    - position: {x: 971, y: -159}
       _isNotNull: 1
       name: StartGame
       executionMode: 2
@@ -39,32 +40,41 @@ MonoBehaviour:
       class: 
       prefab: {fileID: 0}
       generateEvent: 0
-      ports: []
-    - position: {x: 155, y: -404}
+      ports:
+      - trigger: 
+    - position: {x: 157, y: 138}
       _isNotNull: 1
-      name: Menu
-      executionMode: 1
-      namespace: Work
-      class: Hard
+      name: Titlecard
+      executionMode: 0
+      namespace: 
+      class: 
       prefab: {fileID: 0}
       generateEvent: 0
-      ports: []
+      ports:
+      - trigger: 
+    reroute: []
     connections:
     - input:
-        nodeId: 2
-        portId: 1
+        nodeId: 4
+        portId: 0
       output:
         nodeId: 0
         portId: 0
     - input:
-        nodeId: 4
-        portId: 1
-      output:
-        nodeId: 2
+        nodeId: 1
         portId: 0
-    - input:
+      output:
         nodeId: 3
         portId: 1
+    - input:
+        nodeId: 2
+        portId: 0
       output:
         nodeId: 4
+        portId: 1
+    - input:
+        nodeId: 3
         portId: 0
+      output:
+        nodeId: 2
+        portId: 1

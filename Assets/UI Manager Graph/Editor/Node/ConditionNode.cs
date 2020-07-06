@@ -1,9 +1,11 @@
 ﻿using Com.Github.Knose1.Flow.Engine.Settings.NodeData;
+using System;
 using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 
 namespace Com.Github.Knose1.Flow.Editor.Node
 {
+	[Obsolete]
 	public class ConditionNode : FlowGraphNode
 	{
 		protected const string CONDITION = "Condition";

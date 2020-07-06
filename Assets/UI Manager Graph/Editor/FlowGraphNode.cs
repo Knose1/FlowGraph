@@ -18,6 +18,8 @@ namespace Com.Github.Knose1.Flow.Editor
 	/// </summary>
 	public abstract class FlowGraphNode : UnityEditor.Experimental.GraphView.Node
 	{
+		public static event Action OnChange;
+
 		private const int TITLE_BORDER_TOP_WIDTH = 2;
 
 		protected const string NEXT = "Next";
@@ -52,6 +54,14 @@ namespace Com.Github.Knose1.Flow.Editor
 
 			RefreshExpandedState();
 			RefreshPorts();
+
+			RegisterCallback<MouseDownEvent>(OnMouseDown);
+			
+		}
+
+		private void OnMouseDown(MouseDownEvent evt)
+		{
+			OnChange?.Invoke();
 		}
 
 		protected void RemoveTopColor()
@@ -66,9 +76,15 @@ namespace Com.Github.Knose1.Flow.Editor
 			elementTypeColor = color;
 		}
 
+		public override Port InstantiatePort(Orientation orientation, Direction direction, Port.Capacity capacity, Type type)
+		{
+			return Port.Create<FlowGraphEdge>(orientation, direction, capacity, type);
+		}
+
 		protected Port GeneratePort(Direction direction, Port.Capacity capacity = Port.Capacity.Single)
 		{
 			Port port = InstantiatePort(Orientation.Horizontal, direction, capacity, null);
+			port.RegisterCallback<MouseDownEvent>(OnMouseDown);
 			_ports.Add(port);
 			return port;
 		}
@@ -104,8 +120,12 @@ namespace Com.Github.Knose1.Flow.Editor
 		protected void RemovePort(Port port)
 		{
 			_ports.Remove(port);
+			port.UnregisterCallback<MouseDownEvent>(OnMouseDown);
+
 			List<Edge> connections = port.connections.ToList();
 			connections.ForEach(port.Disconnect);
+
+			OnChange?.Invoke();
 		}
 
 		protected void AddInspectorElement(VisualElement elm)
@@ -134,6 +154,26 @@ namespace Com.Github.Knose1.Flow.Editor
 
 		protected virtual void SetupPorts()	 { }
 		protected virtual void SetupFields() { }
+
+		protected void RegisterField<T>(BaseField<T> field)
+		{
+			field.RegisterValueChangedCallback(Field_OnValueChanged);
+		}
+
+		private void Field_OnValueChanged<T>(ChangeEvent<T> evt)
+		{
+			OnChange?.Invoke();
+		}
+
+		protected void RegisterButton(Button button)
+		{
+			button.clickable.clicked += Button_OnClick;
+		}
+
+		private void Button_OnClick()
+		{
+			OnChange?.Invoke();
+		}
 
 		public abstract NodeData Serialize();
 	}

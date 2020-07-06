@@ -56,6 +56,7 @@ namespace Com.Github.Knose1.Flow.Editor.Node
 			UIManagerGraphNodeExtend.CorrectLabel(namespaceField.labelElement);
 			namespaceField.style.width = 250;
 			UIManagerGraphNodeExtend.Indent(namespaceField);
+			RegisterField(namespaceField);
 			AddInspectorElement(namespaceField);
 
 			//Class field
@@ -64,6 +65,7 @@ namespace Com.Github.Knose1.Flow.Editor.Node
 			UIManagerGraphNodeExtend.CorrectLabel(classField.labelElement);
 			classField.style.width = 160;
 			UIManagerGraphNodeExtend.Indent(classField);
+			RegisterField(classField);
 			AddInspectorElement(classField);
 		}
 

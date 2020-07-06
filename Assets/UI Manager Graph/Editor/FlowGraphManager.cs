@@ -1,6 +1,8 @@
 ﻿using Com.Github.Knose1.Flow.Engine.Settings;
 using System;
 using UnityEditor;
+using UnityEditor.SceneManagement;
+using UnityEngine;
 
 namespace Com.Github.Knose1.Flow.Editor
 {
@@ -19,11 +21,24 @@ namespace Com.Github.Knose1.Flow.Editor
 		protected FlowGraphScriptable _target;
 		public FlowGraphScriptable Target => _target;
 
+		public event Action OnSaving;
+
 		public void Init()
 		{
 			Selection.selectionChanged += Selection_SelectionChanged;
-
+			
 			Selection_SelectionChanged();
+		}
+
+		public void ShowAsDirty()
+		{
+			EditorUtility.SetDirty(_target);
+		}
+		
+		public void Save()
+		{
+			OnSaving?.Invoke();
+			AssetDatabase.SaveAssets();
 		}
 
 		public void CreateAsset()

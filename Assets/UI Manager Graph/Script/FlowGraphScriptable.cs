@@ -313,6 +313,11 @@ namespace Com.Github.Knose1.Flow.Engine.Settings.NodeData
 			return hashCode;
 		}
 
+		public override string ToString()
+		{
+			return JsonUtility.ToJson(this);
+		}
+
 		public static bool operator ==(PortData a, PortData b)
 		{
 			return a.nodeId == b.nodeId && a.portId == b.portId;
@@ -397,7 +402,7 @@ namespace Com.Github.Knose1.Flow.Engine.Settings.NodeData
 		[Serializable]
 		public class StateNodePort
 		{
-			[SerializeField] public string trigger;
+			[SerializeField] public string trigger = "";
 		}
 	}
 

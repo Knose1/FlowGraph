@@ -4,6 +4,7 @@ using Com.Github.Knose1.Flow.Engine.Settings.NodeData;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEditor;
 using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -68,6 +69,13 @@ namespace Com.Github.Knose1.Flow.Editor
 			}
 		}
 
+		/*//////////////////////////////////////*/
+		/*                                      */
+		/*                Events                */
+		/*                                      */
+		/*//////////////////////////////////////*/
+
+		public event Action OnChange;
 
 		/*//////////////////////////////////////*/
 		/*                                      */
@@ -97,6 +105,9 @@ namespace Com.Github.Knose1.Flow.Editor
 			miniMap = new MiniMap();
 			this.manager = manager;
 			manager.OnDataChange += Manager_OnDataChange;
+
+			FlowGraphNode.OnChange += OnElementChange;
+			FlowGraphEdge.OnChange += OnElementChange;
 		}
 
 
@@ -339,11 +350,11 @@ namespace Com.Github.Knose1.Flow.Editor
 					node = exitNode = ExitNode.FromData(nodeData as ExitNodeData);
 				}
 
-				else if (nodeAndIndex.type == typeof(ConditionNodeData)) 
+				/*else if (nodeAndIndex.type == typeof(ConditionNodeData)) 
 				{
 					nodeData = target.conditionNodes[nodeAndIndex.index];
 					node = ConditionNode.FromData(nodeData as ConditionNodeData);
-				}
+				}*/
 
 				else if (nodeAndIndex.type == typeof(RerouteData))
 				{
@@ -385,11 +396,11 @@ namespace Com.Github.Knose1.Flow.Editor
 				}
 				catch (Exception)
 				{
-					Debug.LogWarning("Port not found");
+					Debug.LogWarning($"Port not found:\ninput : {input}\noutput: {output}");
 					continue;
 				}
 
-				Edge edge = inputPort.ConnectTo<Edge>(outputPort);
+				Edge edge = inputPort.ConnectTo<FlowGraphEdge>(outputPort);
 				AddElement(edge);
 				selectables.Add(edge);
 			}
@@ -428,6 +439,13 @@ namespace Com.Github.Knose1.Flow.Editor
 			//Generate Graph From Datas
 			GenerateGraphFromDatas(manager.Target.nodes, nodes);
 		}
+
+		private void OnElementChange()
+		{
+			OnChange?.Invoke();
+		}
+
+
 
 		/*//////////////////////////////////////*/
 		/*                                      */
@@ -630,6 +648,7 @@ namespace Com.Github.Knose1.Flow.Editor
 		{
 			Resources.UnloadAsset(styleSheet);
 			manager.OnDataChange -= Manager_OnDataChange;
+			OnChange = null;
 		}
 	}
 	

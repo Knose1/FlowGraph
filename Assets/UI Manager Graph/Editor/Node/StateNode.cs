@@ -11,13 +11,19 @@ namespace Com.Github.Knose1.Flow.Editor.Node
 {
 	public class StateNode : FlowGraphNode
 	{
+
 		//*/////////////////////////////////////*//
 		//                                       //
 		//              Local Class              //
 		//                                       //
 		//*/////////////////////////////////////*//
-		private class StateOutputPort : VisualElement, IDisposable
+		public class StateOutputPort : VisualElement, IDisposable
 		{
+			private static List<StateOutputPort> _list = new List<StateOutputPort>();
+			public static List<StateOutputPort> List => _list;
+
+			public static event Action<List<string>> OnTriggerChange;
+
 			public event Action<StateOutputPort> OnDestroy;
 
 			private Port _port;
@@ -30,8 +36,13 @@ namespace Com.Github.Knose1.Flow.Editor.Node
 			public string Trigger
 			{
 				get => triggerField.value;
-				set => SetPortName(triggerField.value = value);
+				set 
+				{ 
+					SetPortName(triggerField.value = value);
+					ComputeTriggersAndSentEvent(); 
+				}
 			}
+
 
 			private void SetPortName(string value)
 			{
@@ -43,8 +54,14 @@ namespace Com.Github.Knose1.Flow.Editor.Node
 				_port.portName = value;
 			}
 
+			/// <summary>
+			/// Constructor
+			/// </summary>
+			/// <param name="port">Port child</param>
 			public StateOutputPort(Port port)
 			{
+				_list.Add(this);
+
 				UIManagerGraphNodeExtend.Indent(this);
 				style.marginTop = 10;
 
@@ -83,6 +100,7 @@ namespace Com.Github.Knose1.Flow.Editor.Node
 			private void TriggerField_OnValueChanged(ChangeEvent<string> evt)
 			{
 				SetPortName(evt.newValue);
+				ComputeTriggersAndSentEvent();
 			}
 
 			public StateNodeData.StateNodePort GetData()
@@ -103,9 +121,27 @@ namespace Com.Github.Knose1.Flow.Editor.Node
 			public void Dispose()
 			{
 				if (parent != null) parent.Remove(this);
+				
+				_list.Remove(this);
+
+				ComputeTriggersAndSentEvent();
 
 				OnDestroy?.Invoke(this);
 				OnDestroy = null;
+			}
+
+			protected static void ComputeTriggersAndSentEvent()
+			{
+				List<string> triggers = new List<string>();
+				for (int i = _list.Count - 1; i >= 0; i--)
+				{
+					string trigger = _list[i].Trigger;
+					if (trigger != "" && triggers.Contains(trigger)) continue;
+
+					triggers.Add(trigger);
+				}
+
+				OnTriggerChange?.Invoke(triggers);
 			}
 		}
 
@@ -214,12 +250,14 @@ namespace Com.Github.Knose1.Flow.Editor.Node
 			portAddButton = new Button(AddStateOutputPort);
 			portAddButton.text = "Add Port";
 			titleContainer.Add(portAddButton);
+			RegisterButton(portAddButton);
 
 			//Name field
 			nameField = new TextField("Name");
 			UIManagerGraphNodeExtend.CorrectLabel(nameField.labelElement); //Correct the label style of the field
 			nameField.style.width = 125; //Set its width
 			nameField.RegisterValueChangedCallback(OnNameFieldChange); //Register onValueChanged
+			RegisterField(nameField);
 			AddInspectorElement(nameField); //Add to inspector
 
 			//CreationMode field
@@ -227,6 +265,7 @@ namespace Com.Github.Knose1.Flow.Editor.Node
 			UIManagerGraphNodeExtend.CorrectLabel(executionModeField.labelElement);
 			executionModeField.style.width = 160;
 			executionModeField.RegisterValueChangedCallback(OnCreationModeFieldChange); //Register onValueChanged
+			RegisterField(executionModeField);
 			AddInspectorElement(executionModeField);
 
 			//Namespace field
@@ -235,6 +274,7 @@ namespace Com.Github.Knose1.Flow.Editor.Node
 			UIManagerGraphNodeExtend.CorrectLabel(namespaceField.labelElement);
 			UIManagerGraphNodeExtend.Indent(namespaceField, 1);
 			namespaceField.style.width = 250;
+			RegisterField(namespaceField);
 
 			//Class field
 			classField = new TextField("Class");
@@ -242,6 +282,7 @@ namespace Com.Github.Knose1.Flow.Editor.Node
 			UIManagerGraphNodeExtend.CorrectLabel(classField.labelElement);
 			UIManagerGraphNodeExtend.Indent(classField, 1);
 			classField.style.width = 160;
+			RegisterField(classField);
 
 			//Prefab field
 			prefabField = new ObjectField("Prefab");
@@ -251,7 +292,8 @@ namespace Com.Github.Knose1.Flow.Editor.Node
 			UIManagerGraphNodeExtend.CorrectLabel(prefabField.labelElement);
 			UIManagerGraphNodeExtend.Indent(prefabField, 1);
 			prefabField.style.width = 160;
-			
+			RegisterField(prefabField);
+
 			//Event text
 			eventTextElement = new TextElement();
 			eventTextElement.tooltip = "The name of the event";
@@ -266,6 +308,7 @@ namespace Com.Github.Knose1.Flow.Editor.Node
 			generateEventField.RegisterValueChangedCallback(OnGenerateEventFieldChange);
 			UIManagerGraphNodeExtend.CorrectToggle(generateEventField);
 			UIManagerGraphNodeExtend.Indent(generateEventField, 1);
+			RegisterField(generateEventField);
 
 			StateName = STATE;	//This also sets the title of the node
 			
