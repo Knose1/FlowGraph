@@ -20,6 +20,7 @@ namespace Com.Github.Knose1.Flow.Editor
 		private const string TITLE = nameof(FlowWindow);
 		private const string STATE_NODE = "+State Node";
 		private const string REROUTE = "+Reroute";
+		private const string EXIT = "+Exit Node";
 		private const string MINIMAP = "Toggle minimap";
 		private const string SAVE = "Save";
 		
@@ -85,10 +86,15 @@ namespace Com.Github.Knose1.Flow.Editor
 			createScreenNode.text = STATE_NODE;
 			toolbar.Add(createScreenNode);
 
-			//Button Screen Node
+			//Button Reroute Node
 			ToolbarButton createReroute = new ToolbarButton(CreateRetoute);
 			createReroute.text = REROUTE;
 			toolbar.Add(createReroute);
+
+			//Button Exit Node
+			ToolbarButton createExit = new ToolbarButton(CreateExit);
+			createExit.text = EXIT;
+			toolbar.Add(createExit);
 
 			//Toggle Minimap
 			ToolbarToggle minimapToggle = new ToolbarToggle();
@@ -183,6 +189,11 @@ namespace Com.Github.Knose1.Flow.Editor
 		private void CreateRetoute()
 		{
 			graph.CreateRetoute();
+		}
+
+		private void CreateExit()
+		{
+			graph.AddNode(new ExitNode());
 		}
 
 		private void CreateConditionNode()

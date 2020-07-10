@@ -19,7 +19,7 @@ MonoBehaviour:
       namespace: Com.Github.Knose1.Flow.Example
       class: UIManager
     exitNode:
-    - position: {x: 1613, y: -360}
+    - position: {x: 1518, y: -378}
       _isNotNull: 1
     stateNodes:
     - position: {x: 157, y: 138}
@@ -39,7 +39,7 @@ MonoBehaviour:
       class: Menu
       generateEvent: 1
       ports:
-      - trigger: 
+      - trigger: StartGame
     - position: {x: 1092, y: -191}
       _isNotNull: 1
       name: StartGame
@@ -58,6 +58,12 @@ MonoBehaviour:
         nodeId: 0
         portId: 0
     - input:
+        nodeId: 1
+        portId: 0
+      output:
+        nodeId: 4
+        portId: 1
+    - input:
         nodeId: 3
         portId: 0
       output:
@@ -68,10 +74,4 @@ MonoBehaviour:
         portId: 0
       output:
         nodeId: 3
-        portId: 1
-    - input:
-        nodeId: 1
-        portId: 0
-      output:
-        nodeId: 4
         portId: 1
