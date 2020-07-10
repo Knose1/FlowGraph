@@ -90,26 +90,32 @@ namespace Com.Github.Knose1.Flow.Editor
 			createReroute.text = REROUTE;
 			toolbar.Add(createReroute);
 
-			//Middle
-			VisualElement middle = new VisualElement();
-			middle.name = "Middle";
-			toolbar.Add(middle);
-
-			middle.style.flexGrow = 1;
-
 			//Toggle Minimap
 			ToolbarToggle minimapToggle = new ToolbarToggle();
 			minimapToggle.RegisterValueChangedCallback(MinimapToggleChange);
 			minimapToggle.text = MINIMAP;
 			toolbar.Add(minimapToggle);
 
+			//Middle
+			VisualElement middle = new VisualElement();
+			middle.name = "Middle";
 			middle.style.flexGrow = 1;
+			toolbar.Add(middle);
+
+			//New Asset
+			ToolbarButton newAsset = new ToolbarButton(manager.CreateAsset);
+			newAsset.text = "New Graph";
+			toolbar.Add(newAsset);
+
+			//Generate
+			ToolbarButton generate  = new ToolbarButton(manager.GenerateCode);
+			generate.text = "Generate";
+			toolbar.Add(generate);
 
 			//Save
-			save = new ToolbarButton(manager.Save);
+			save = new ToolbarButton(() => { manager.Save(); });
 			save.text = SAVE;
 			toolbar.Add(save);
-
 
 			rootVisualElement.Add(toolbar);
 		}

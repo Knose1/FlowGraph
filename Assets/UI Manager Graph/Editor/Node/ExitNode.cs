@@ -14,8 +14,6 @@ namespace Com.Github.Knose1.Flow.Editor.Node
 
 			//AddInspectorElement
 
-			capabilities ^= Capabilities.Deletable;
-
 			SetNodeColor(Color.yellow);
 
 			//Setup port

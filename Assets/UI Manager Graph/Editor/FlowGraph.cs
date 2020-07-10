@@ -11,6 +11,40 @@ using UnityEngine.UIElements;
 
 namespace Com.Github.Knose1.Flow.Editor
 {
+	public static class FlowGraphAssetDatabase
+	{
+		public const string ASSET_FOLDER = "Assets/UI Manager Graph/Editor/Asset/";
+
+		/// <summary>
+		/// The stylesheet name
+		/// </summary>
+		public const string RESSOURCE_STYLESHEET = ASSET_FOLDER+"Graph.uss";
+
+		/// <summary>
+		/// Arguments : <br/> 
+		/// - #{NAMESPACE}#: The class's namespace
+		/// - #{CLASS}#: The class's name
+		/// - #{EVENTS}#: The event fields
+		/// - #{GO_FIELDS}#: The game object fields
+		/// - #{CLASS_FIELDS}#: The class object fields
+		/// - #{STATES}#: The MachineState fields
+		/// - #{CREATE_STATES}#: Where to create the states
+		/// - #{ALLOW_TRIGGERS}# : Where to allow triggers
+		/// - #{ADD_TRIGGERS}# : Where to add triggers to states
+		/// - #{ADD_EVENTS}# : Where to add events to
+		/// - #{ENTRY_STATE}# : The first state to be executed
+		/// </summary>
+		public const string CLASS_TEMPLATE = ASSET_FOLDER+"Class_template.cs.txt";
+
+		/// <summary>
+		/// <see cref="Generate.TemplateJsonData"/>
+		/// </summary>
+		public const string ARGS_TEMPLATE = ASSET_FOLDER+"TemplateArgs.json";
+
+
+
+	}
+
 	/// <summary>
 	/// Flow graph, you can place <see cref="FlowGraphNode"/>s on it, move the nodes, link them etc...<br/>
 	/// <br/>
@@ -18,11 +52,6 @@ namespace Com.Github.Knose1.Flow.Editor
 	/// </summary>
 	public class FlowGraph : GraphView, IDisposable
 	{
-		/// <summary>
-		/// The stylesheet name
-		/// </summary>
-		private const string RESSOURCE_STYLESHEET = "Graph";
-
 		//Some overrides
 		protected override bool canCopySelection
 		{
@@ -35,9 +64,8 @@ namespace Com.Github.Knose1.Flow.Editor
 				}
 
 				bool containsEntry = selection.Contains(entryNode);
-				bool containsExit = selection.Contains(exitNode);
 
-				return count > 0 && !(count == 1 && (containsEntry || containsExit)) && !(count == 2 && containsEntry && containsExit); //The selection can't contain only entry / exit node
+				return count > 0 && !(count == 1 && containsEntry); //The selection can't contain only entry node
 			}
 		}
 		protected override bool canCutSelection
@@ -85,7 +113,6 @@ namespace Com.Github.Knose1.Flow.Editor
 
 
 		protected EntryNode entryNode = null;
-		protected ExitNode exitNode = null;
 		protected FlowGraphManager manager;
 		private MiniMap miniMap;
 		private StyleSheet styleSheet;
@@ -295,16 +322,7 @@ namespace Com.Github.Knose1.Flow.Editor
 		/// </summary>
 		protected void GenerateNewGraph()
 		{
-			try
-			{
-				AddNode(entryNode = GenerateEntryPointNode(), false);
-				AddNode(exitNode = GenerateExitPointNode(), false);
-			}
-			catch (Exception err)
-			{
-				Debug.LogError(err);
-				Debug.LogWarning("[" + nameof(FlowGraph) + "] An error occured when Generating the graph");
-			}
+			AddNode(entryNode = GenerateEntryPointNode(), false);
 		}
 
 		/// <summary>
@@ -346,8 +364,8 @@ namespace Com.Github.Knose1.Flow.Editor
 
 				else if (nodeAndIndex.type == typeof(ExitNodeData)) 
 				{
-					nodeData = target.exitNode;
-					node = exitNode = ExitNode.FromData(nodeData as ExitNodeData);
+					nodeData = target.exitNode[nodeAndIndex.index];
+					node = ExitNode.FromData(nodeData as ExitNodeData);
 				}
 
 				/*else if (nodeAndIndex.type == typeof(ConditionNodeData)) 
@@ -421,23 +439,30 @@ namespace Com.Github.Knose1.Flow.Editor
 		{
 			//Remove old data
 			entryNode = null;
-			exitNode = null;
 			DestroyGraphVisual();
 
 			//If there is no target, there is no graph to load
 			if (!manager.Target) return;
 			manager.Target.GetNodes(out List<NodeDataList.NodeAndIndex> nodes);
 
-			//Create New Graph
-			if (nodes.Count < 2)
+			try
 			{
 				//Create New Graph
-				GenerateNewGraph();
-				return;
-			}
+				if (nodes.Count < 1)
+				{
+					//Create New Graph
+					GenerateNewGraph();
+					return;
+				}
 
-			//Generate Graph From Datas
-			GenerateGraphFromDatas(manager.Target.nodes, nodes);
+				//Generate Graph From Datas
+				GenerateGraphFromDatas(manager.Target.nodes, nodes);
+			}
+			catch (Exception err)
+			{
+				Debug.LogError(err);
+				Debug.LogWarning("[" + nameof(FlowGraph) + "] An error occured when Generating the graph");
+			}
 		}
 
 		private void OnElementChange()
@@ -475,12 +500,12 @@ namespace Com.Github.Knose1.Flow.Editor
 			try
 			{
 				//Load
-				styleSheet = Resources.Load<StyleSheet>(RESSOURCE_STYLESHEET);
+				styleSheet = AssetDatabase.LoadAssetAtPath<StyleSheet>(FlowGraphAssetDatabase.RESSOURCE_STYLESHEET);
 			}
 			catch (Exception e)
 			{
 				Debug.LogError(e);
-				Debug.LogWarning("[" + nameof(FlowGraph) + "] error loading the Stylesheet, filename : Ressource/" + RESSOURCE_STYLESHEET);
+				Debug.LogWarning("[" + nameof(FlowGraph) + "] error loading the Stylesheet, filename : " + FlowGraphAssetDatabase.RESSOURCE_STYLESHEET);
 			}
 
 			try
@@ -490,7 +515,7 @@ namespace Com.Github.Knose1.Flow.Editor
 			catch (Exception e)
 			{
 				Debug.LogError(e);
-				Debug.LogWarning("[" + nameof(FlowGraph) + "] error parsing the Stylesheet, filename : Ressource/" + RESSOURCE_STYLESHEET);
+				Debug.LogWarning("[" + nameof(FlowGraph) + "] error parsing the Stylesheet, filename : " + FlowGraphAssetDatabase.RESSOURCE_STYLESHEET);
 
 				styleSheets.Remove(styleSheet);
 			}
@@ -642,12 +667,14 @@ namespace Com.Github.Knose1.Flow.Editor
 		/*//////////////////////////////////////*/
 
 		/// <summary>
-		/// Destroy the instance and Unregister all calback
+		/// Destroy the instance and Unregister all callbacks
 		/// </summary>
 		public void Dispose()
 		{
-			Resources.UnloadAsset(styleSheet);
+			styleSheets.Remove(styleSheet);
 			manager.OnDataChange -= Manager_OnDataChange;
+			FlowGraphNode.OnChange -= OnElementChange;
+			FlowGraphEdge.OnChange -= OnElementChange;
 			OnChange = null;
 		}
 	}

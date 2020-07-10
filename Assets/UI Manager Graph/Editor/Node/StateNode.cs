@@ -64,7 +64,13 @@ namespace Com.Github.Knose1.Flow.Editor.Node
 
 				UIManagerGraphNodeExtend.Indent(this);
 				style.marginTop = 10;
-
+				style.paddingLeft = 5;
+				style.paddingRight = 5;
+				style.paddingTop = 5;
+				
+				const float BG_COLOR = 0.1037736f;
+				const float BG_ALPHA = 0.6784314f;
+				style.backgroundColor = new Color(BG_COLOR, BG_COLOR, BG_COLOR, BG_ALPHA);
 
 				//Trigger Field
 				triggerField = new TextField("Trigger");
@@ -203,13 +209,12 @@ namespace Com.Github.Knose1.Flow.Editor.Node
 			set => classField.value = value;
 		}
 		
-		private ObjectField prefabField;
+		/*private ObjectField prefabField;
 		public GameObject Prefab
 		{
 			get => (GameObject)prefabField.value;
 			set => prefabField.value = value;
-		
-		}
+		}*/
 		
 		private TextElement eventTextElement;
 
@@ -285,14 +290,14 @@ namespace Com.Github.Knose1.Flow.Editor.Node
 			RegisterField(classField);
 
 			//Prefab field
-			prefabField = new ObjectField("Prefab");
-			prefabField.tooltip = "The prefab object to create";
-			prefabField.allowSceneObjects = false;
-			prefabField.objectType = typeof(GameObject);
-			UIManagerGraphNodeExtend.CorrectLabel(prefabField.labelElement);
-			UIManagerGraphNodeExtend.Indent(prefabField, 1);
-			prefabField.style.width = 160;
-			RegisterField(prefabField);
+			//prefabField = new ObjectField("Prefab");
+			//prefabField.tooltip = "The prefab object to create";
+			//prefabField.allowSceneObjects = false;
+			//prefabField.objectType = typeof(GameObject);
+			//UIManagerGraphNodeExtend.CorrectLabel(prefabField.labelElement);
+			//UIManagerGraphNodeExtend.Indent(prefabField, 1);
+			//prefabField.style.width = 160;
+			//RegisterField(prefabField);
 
 			//Event text
 			eventTextElement = new TextElement();
@@ -357,7 +362,7 @@ namespace Com.Github.Knose1.Flow.Editor.Node
 		{
 			RemoveInspectorElement(namespaceField);
 			RemoveInspectorElement(classField);
-			RemoveInspectorElement(prefabField);
+			//RemoveInspectorElement(prefabField);
 			RemoveInspectorElement(eventTextElement);
 			RemoveInspectorElement(generateEventField);
 
@@ -377,7 +382,7 @@ namespace Com.Github.Knose1.Flow.Editor.Node
 					UIManagerGraphNodeExtend.Indent(eventTextElement, 2);
 					SetNodeColor(INSTANTIATE_COLOR);
 
-					AddInspectorElement(prefabField);
+					//AddInspectorElement(prefabField);
 					AddInspectorElement(generateEventField);
 					break;
 				case StateNodeData.Execution.Event:
@@ -413,7 +418,7 @@ namespace Com.Github.Knose1.Flow.Editor.Node
 		//*/////////////////////////////////////*//
 		public override NodeData Serialize()
 		{
-			return new StateNodeData(GetPosition().position, StateName, ExecutionMode, Namespace, Class, Prefab, GenerateEvent, GetPortsData());
+			return new StateNodeData(GetPosition().position, StateName, ExecutionMode, Namespace, Class, GenerateEvent, GetPortsData());
 		}
 
 		public static StateNode FromData(StateNodeData data)
@@ -423,7 +428,6 @@ namespace Com.Github.Knose1.Flow.Editor.Node
 			toReturn.ExecutionMode = data.executionMode;
 			toReturn.Namespace = data.@namespace;
 			toReturn.Class = data.@class;
-			toReturn.Prefab = data.prefab;
 			toReturn.GenerateEvent = data.generateEvent;
 			toReturn.OnCreationModeFieldChange();
 

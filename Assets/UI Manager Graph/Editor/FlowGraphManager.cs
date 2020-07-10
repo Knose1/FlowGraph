@@ -1,5 +1,7 @@
-﻿using Com.Github.Knose1.Flow.Engine.Settings;
+﻿using Com.Github.Knose1.Flow.Editor.Generate;
+using Com.Github.Knose1.Flow.Engine.Settings;
 using System;
+using System.IO;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -15,13 +17,15 @@ namespace Com.Github.Knose1.Flow.Editor
 			NotSelected
 		}
 
+		private const string DEBUG_PREFIX = "[" + nameof(FlowGraphManager) + "]";
+
 		public event Action OnDataChange;
 		public event Action<Status> OnSelectionStatusChange;
+		public event Action OnSaving;
 
 		protected FlowGraphScriptable _target;
 		public FlowGraphScriptable Target => _target;
 
-		public event Action OnSaving;
 
 		public void Init()
 		{
@@ -35,10 +39,17 @@ namespace Com.Github.Knose1.Flow.Editor
 			EditorUtility.SetDirty(_target);
 		}
 		
-		public void Save()
+		public bool Save()
 		{
+			if (!_target)
+			{
+				Debug.LogWarning(DEBUG_PREFIX+" There is no openned graph");
+				return false;
+			}
 			OnSaving?.Invoke();
 			AssetDatabase.SaveAssets();
+
+			return true;
 		}
 
 		public void CreateAsset()
@@ -48,9 +59,38 @@ namespace Com.Github.Knose1.Flow.Editor
 
 		public void GenerateCode()
 		{
-			EditorUtility.SaveFilePanel(
-				"", "", "", ".cs"
+			if (!Save()) 
+			{
+				Debug.Log(DEBUG_PREFIX+" Can't generate the code");
+				return;
+			}
+
+			Debug.Log(DEBUG_PREFIX+" Start Generating...");
+			
+			if (_target.nodes.GetErrors())
+			{
+				Debug.Log(DEBUG_PREFIX + " Can't generate the code");
+				return;
+			}
+
+			string folderArg = AssetDatabase.GetAssetPath(_target);
+			folderArg = Path.GetDirectoryName(folderArg);
+
+			string path = EditorUtility.SaveFilePanel(
+				title:"Generate Script", folderArg, _target.EntryNode.@class, "cs"
 			);
+
+			if (path == "")
+			{
+				Debug.Log(DEBUG_PREFIX + " Canceled");
+				return;
+			}
+
+			string classTemplate = AssetDatabase.LoadAssetAtPath<TextAsset>(FlowGraphAssetDatabase.CLASS_TEMPLATE).text;
+			string argsTemplate = AssetDatabase.LoadAssetAtPath<TextAsset>(FlowGraphAssetDatabase.ARGS_TEMPLATE).text;
+			string code = GraphCodeGenerator.Generate(classTemplate, JsonUtility.FromJson<TemplateJsonData>(argsTemplate), _target);
+
+			Debug.Log(DEBUG_PREFIX + " Code has been generated");
 		}
 
 		private void Selection_SelectionChanged()

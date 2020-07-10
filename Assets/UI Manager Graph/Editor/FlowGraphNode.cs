@@ -123,7 +123,13 @@ namespace Com.Github.Knose1.Flow.Editor
 			port.UnregisterCallback<MouseDownEvent>(OnMouseDown);
 
 			List<Edge> connections = port.connections.ToList();
-			connections.ForEach(port.Disconnect);
+			
+			for (int i = connections.Count - 1; i >= 0; i--)
+			{
+				Edge edge = connections[i];
+				port.Disconnect(edge);
+				edge.RemoveFromHierarchy();
+			}
 
 			OnChange?.Invoke();
 		}

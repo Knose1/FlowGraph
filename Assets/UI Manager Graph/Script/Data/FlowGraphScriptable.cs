@@ -30,8 +30,10 @@ namespace Com.Github.Knose1.Flow.Engine.Settings
 			}
 		}
 
+		public const string DEBUG_PREFIX = "["+nameof(NodeDataList)+"]";
+
 		public EntryNodeData entryNode;
-		public ExitNodeData exitNode;
+		public List<ExitNodeData> exitNode;
 		public List<StateNodeData> stateNodes;
 		public List<RerouteData> reroute;
 		/* Condition Nodes are deprecated */
@@ -47,7 +49,7 @@ namespace Com.Github.Knose1.Flow.Engine.Settings
 			ClearAllDatas();
 		}
 
-		public NodeDataList(EntryNodeData entryNode, ExitNodeData exitNode, List<StateNodeData> stateNodes, List<ConditionNodeData> conditionNodes, List<RerouteData> reroute, List<ConnectorData> connections)
+		public NodeDataList(EntryNodeData entryNode, List<ExitNodeData> exitNode, List<StateNodeData> stateNodes, List<ConditionNodeData> conditionNodes, List<RerouteData> reroute, List<ConnectorData> connections)
 		{
 			this.entryNode = entryNode;
 			this.exitNode = exitNode;
@@ -59,12 +61,90 @@ namespace Com.Github.Knose1.Flow.Engine.Settings
 		}
 
 		/// <summary>
+		/// Return true if there is an error
+		/// </summary>
+		/// <returns></returns>
+		public bool GetErrors()
+		{
+			bool hasError = false;
+
+			List<string> namespaceToCheck = new List<string>();
+			List<string> classToCheck = new List<string>();
+			
+			namespaceToCheck.Add(entryNode.@namespace);
+			classToCheck.Add(entryNode.@class);
+			
+			for (int i = stateNodes.Count - 1; i >= 0; i--)
+			{
+				StateNodeData stateNode = stateNodes[i];
+				if (stateNode.executionMode == StateNodeData.Execution.Constructor)
+				{
+					namespaceToCheck.Add(stateNode.@namespace);
+					classToCheck.Add(stateNode.@class);
+				}
+			}
+
+			//Check class
+			for (int i = classToCheck.Count - 1; i >= 0; i--)
+			{
+				string className = classToCheck[i];
+				if (!CheckName(className)) 
+				{
+					Debug.LogError(DEBUG_PREFIX + $" the class \"{className}\" is in wrong format");
+					hasError = true;
+				};
+			}
+
+			//Check namespaces
+			for (int i = namespaceToCheck.Count - 1; i >= 0; i--)
+			{
+				string @namespace = namespaceToCheck[i];
+				if (!CheckName(@namespace.Split('.')))
+				{
+					Debug.LogError(DEBUG_PREFIX + $" the namespace \"{@namespace}\" is in wrong format");
+					hasError = true;
+				};
+			}
+
+			return hasError;
+		}
+
+		/// <summary>
+		/// Return true if there is no problem
+		/// </summary>
+		/// <param name="names"></param>
+		/// <returns></returns>
+		protected bool CheckName(IList<string> names)
+		{
+			for (int i = names.Count - 1; i >= 0; i--)
+			{
+				if (!CheckName(names[i])) return false;
+			}
+
+			return true;
+		}
+
+		/// <summary>
+		/// Return true if there is no problem
+		/// </summary>
+		/// <param name="name"></param>
+		/// <returns></returns>
+		protected bool CheckName(string name)
+		{
+			if (name.Length == 0) return false;
+
+			Regex checkName = new Regex("(^\\d|\\n| |\\W)");
+
+			return !checkName.IsMatch(name);
+		}
+
+		/// <summary>
 		/// Clear all datas
 		/// </summary>
 		public void ClearAllDatas()
 		{
 			entryNode = null;
-			exitNode = null;
+			exitNode = new List<ExitNodeData>();
 			stateNodes = new List<StateNodeData>();
 			conditionNodes = new List<ConditionNodeData>();
 			reroute = new List<RerouteData>();
@@ -86,8 +166,10 @@ namespace Com.Github.Knose1.Flow.Engine.Settings
 
 			if (entryNode != null && entryNode.IsNotNull) nodes.Add(new NodeAndIndex(0, entryNode.GetType(), entryNode.position));
 
-			if (exitNode != null && exitNode.IsNotNull) nodes.Add(new NodeAndIndex(0, exitNode.GetType(), exitNode.position));
-
+			for (int i = 0; i < exitNode.Count; i++)
+			{
+				nodes.Add(new NodeAndIndex(i, exitNode[i].GetType(), exitNode[i].position));
+			}
 
 			for (int i = 0; i < stateNodes.Count; i++)
 			{
@@ -116,7 +198,7 @@ namespace Com.Github.Knose1.Flow.Engine.Settings
 
 			nodes = new List<NodeData.NodeData>();
 			nodes.Add(entryNode);
-			nodes.Add(exitNode);
+			nodes.AddRange(exitNode);
 			nodes.AddRange(stateNodes);
 			nodes.AddRange(conditionNodes);
 			nodes.AddRange(reroute);
@@ -134,7 +216,7 @@ namespace Com.Github.Knose1.Flow.Engine.Settings
 				entryNode = nodeData as EntryNodeData;
 
 			else if (nodeData is ExitNodeData)
-				exitNode = nodeData as ExitNodeData;
+				exitNode.Add(nodeData as ExitNodeData);
 
 			else if (nodeData is StateNodeData)
 				stateNodes.Add(nodeData as StateNodeData);
@@ -156,7 +238,7 @@ namespace Com.Github.Knose1.Flow.Engine.Settings
 				entryNode = nodeData as EntryNodeData;
 
 			else if (nodeData is ExitNodeData)
-				exitNode = nodeData as ExitNodeData;
+				exitNode.Insert(0, nodeData as ExitNodeData);
 
 			else if (nodeData is StateNodeData)
 				stateNodes.Insert(0, nodeData as StateNodeData);
@@ -222,7 +304,7 @@ namespace Com.Github.Knose1.Flow.Engine.Settings
 			set => nodes.entryNode = value;
 		}
 
-		public ExitNodeData ExitNode
+		public List<ExitNodeData> ExitNode
 		{
 			get => nodes.exitNode;
 			set => nodes.exitNode = value;
@@ -384,17 +466,15 @@ namespace Com.Github.Knose1.Flow.Engine.Settings.NodeData
 		[SerializeField] public Execution executionMode;
 		[SerializeField] public string @namespace;
 		[SerializeField] public string @class;
-		[SerializeField] public GameObject prefab = null;
 		[SerializeField] public bool generateEvent;
 		[SerializeField] public List<StateNodePort> ports;
 
-		public StateNodeData(Vector2 position, string name, Execution executionMode, string @namespace, string @class, GameObject prefab, bool generateEvent, List<StateNodePort> ports) : base(position)
+		public StateNodeData(Vector2 position, string name, Execution executionMode, string @namespace, string @class, bool generateEvent, List<StateNodePort> ports) : base(position)
 		{
 			this.name = name;
 			this.executionMode = executionMode;
 			this.@namespace = @namespace;
 			this.@class = @class;
-			this.prefab = prefab;
 			this.generateEvent = generateEvent;
 			this.ports = ports;
 		}
