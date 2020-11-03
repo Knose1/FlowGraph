@@ -5,6 +5,9 @@ using UnityEditor;
 
 namespace Com.Github.Knose1.Flow.Editor.Generate
 {
+	/// <summary>
+	/// Custom inspector for FlowGraphScriptable
+	/// </summary>
 	[CustomEditor(typeof(Engine.Settings.FlowGraphScriptable))]
 	public class FlowGraphScriptableEditor : UnityEditor.Editor
 	{

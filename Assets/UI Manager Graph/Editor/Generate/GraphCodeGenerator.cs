@@ -7,6 +7,9 @@ using System.Text.RegularExpressions;
 
 namespace Com.Github.Knose1.Flow.Editor.Generate
 {
+	/// <summary>
+	/// A class that compile a NodeDataList into C# script (string) using a template
+	/// </summary>
 	public static class GraphCodeGenerator
 	{
 		private const string END_STATE         = "END_STATE";
@@ -38,6 +41,8 @@ namespace Com.Github.Knose1.Flow.Editor.Generate
 
 		private const string UNDEFINED = "[UNDEFINED_REPLACER]";
 		private const string DEBUG_PREFIX = "[" + nameof(GraphCodeGenerator) + "]";
+
+		#region REGEX
 		private readonly static Regex END_STATE_REGEX       = new Regex(Regex.Escape(PREFIX+ END_STATE      +SUFFIX));
 
 		private readonly static Regex EVENTS_REGEX          = new Regex(Regex.Escape(PREFIX+ EVENTS			+SUFFIX));
@@ -68,7 +73,19 @@ namespace Com.Github.Knose1.Flow.Editor.Generate
 		private readonly static Regex L_STATE_NAME_1_REGEX    = new Regex(Regex.Escape(PREFIX+ L_STATE_NAME  + "_1" +SUFFIX));
 
 		private readonly static Regex CONTAINS_UNDEFINED   = new Regex(Regex.Escape(UNDEFINED));
+		#endregion REGEX
 
+		/// <summary>
+		/// Function used to replace a template (input) by some values
+		/// </summary>
+		/// <param name="input"></param>
+		/// <param name="namespace"></param>
+		/// <param name="class"></param>
+		/// <param name="hStateName"></param>
+		/// <param name="lStateName"></param>
+		/// <param name="trigger"></param>
+		/// <param name="createThread"></param>
+		/// <returns></returns>
 		private static string ReplaceJsonDataTemplate(string input, string @namespace, string @class, string hStateName, string lStateName, string trigger, string createThread)
 		{
 			MatchCollection namespaceMatch = NAMESPACE_REGEX.Matches(input);
@@ -97,7 +114,22 @@ namespace Com.Github.Knose1.Flow.Editor.Generate
 
 			return input;
 		}
-		
+
+		/// <summary>
+		/// Function used to replace a template (input) by some values
+		/// </summary>
+		/// <param name="input"></param>
+		/// <param name="namespace_0"></param>
+		/// <param name="class_0"></param>
+		/// <param name="hStateName_0"></param>
+		/// <param name="lStateName_0"></param>
+		/// <param name="trigger"></param>
+		/// <param name="createThread"></param>
+		/// <param name="namespace_1"></param>
+		/// <param name="class_1"></param>
+		/// <param name="hStateName_1"></param>
+		/// <param name="lStateName_1"></param>
+		/// <returns></returns>
 		private static string ReplaceJsonDataTemplateMultiple(string input, 
 			string @namespace_0, string @class_0, string hStateName_0, string lStateName_0, string trigger, string createThread,
 			string @namespace_1, string @class_1, string hStateName_1, string lStateName_1
@@ -138,20 +170,27 @@ namespace Com.Github.Knose1.Flow.Editor.Generate
 			return input;
 		}
 
+		/// <summary>
+		/// Generate the C# code
+		/// </summary>
+		/// <param name="template">The templates used to generate the whole class</param>
+		/// <param name="dataTemplate">The templates for specific parts of the code</param>
+		/// <param name="data">The data to translate into C# code</param>
+		/// <returns></returns>
 		public static string Generate(string template, TemplateJsonData dataTemplate, NodeDataList data)
 		{
+			/****************************************************/
+			/* Lists for specific parts of the code to generate */
 			List<string> states			= new List<string>();
 			List<string> createStates	= new List<string>();
-
 			List<string> events			= new List<string>();
-			
 			List<string> goFields		= new List<string>();
-
 			List<string> classFields	= new List<string>();
-			
 			List<string> allowTriggers	= new List<string>();
 			List<string> addTriggers    = new List<string>();
 			List<string> addEvents		= new List<string>();
+			/*                                                  */
+			/****************************************************/
 
 			List<StateNodeData> stateNodes = data.stateNodes;
 			data.GetNodes(out List<NodeData> nodes);
@@ -177,6 +216,7 @@ namespace Com.Github.Knose1.Flow.Editor.Generate
 				createThread = BoolToString(port.createThread);
 			}
 
+			//Iterate on each node to generate the node
 			for (int i = 0; i < stateNodesCount; i++)
 			{
 				StateNodeData state = stateNodes[i];
@@ -184,6 +224,9 @@ namespace Com.Github.Knose1.Flow.Editor.Generate
 
 				LGetStateData(state, out string @namespace, out string @class, out string hStateName, out string lStateName);
 
+				/// <summary>
+				/// Add states in the different List<string> (see at top of the function)
+				/// </summary>
 				void LAddState(GeneratePosition generatePosition, StateNodeData.Execution executionType, bool generateEvent = false)
 				{
 					if (executionType == StateNodeData.Execution.Event) generateEvent = true;
@@ -221,6 +264,10 @@ namespace Com.Github.Knose1.Flow.Editor.Generate
 						break;
 				}
 
+				//Iterate on each output port of the nodes to generate the connections
+				//
+				//Connections goes from output to input
+				//
 				for (int j = 0; j < portCount; j++)
 				{
 					StateNodeData.StateNodePort stateNodeOutputPort = state.ports[j];
@@ -228,9 +275,10 @@ namespace Com.Github.Knose1.Flow.Editor.Generate
 					LGetPortDatas(stateNodeOutputPort, out string trigger, out string createThread);
 					allowTriggers.Add(ReplaceJsonDataTemplate(dataTemplate.ALLOW_TRIGGERS, @namespace, @class, hStateName, lStateName, trigger, createThread));
 					
-					List<ConnectorData> connections = data.FindOutputNode(state, stateNodeOutputPort);
+					List<ConnectorData> connections = data.FindOutputNode(state, stateNodeOutputPort); //Find each connection linked to the output port
 					int connectionCount = connections.Count;
 
+					//For each connection
 					for (int k = 0; k < connectionCount; k++)
 					{
 						ConnectorData connection = connections[k];
@@ -239,6 +287,7 @@ namespace Com.Github.Knose1.Flow.Editor.Generate
 						NodeData otherNode = nodePortData.GetNode(nodes);
 						if (otherNode is RerouteData)
 						{
+							//If next node is a reroute, find where it goes
 							NodeData node = (otherNode as RerouteData).GetNextEffectNode(data);
 
 							otherNode = node;
@@ -246,12 +295,14 @@ namespace Com.Github.Knose1.Flow.Editor.Generate
 
 						if (otherNode is ExitNodeData)
 						{
+							//If exit, generate exit
 							addTriggers.Add(ReplaceJsonDataTemplate(dataTemplate.END_STATE, @namespace, @class, hStateName, lStateName, trigger, FALSE));
 							continue;
 						}
 
 						if (otherNode is StateNodeData)
 						{
+							//If state, generate state
 							StateNodeData state_1 = otherNode as StateNodeData;
 
 							LGetStateData(state_1, out string @namespace_1, out string @class_1, out string hStateName_1, out string lStateName_1);

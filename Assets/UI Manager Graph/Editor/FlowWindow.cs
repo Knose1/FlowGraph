@@ -11,7 +11,9 @@ using UnityEngine.UIElements;
 
 namespace Com.Github.Knose1.Flow.Editor
 {
-
+	/// <summary>
+	/// The window for the FlowGraph
+	/// </summary>
 	public class FlowWindow : EditorWindow
 	{
 

@@ -8,6 +8,9 @@ using UnityEngine;
 
 namespace Com.Github.Knose1.Flow.Editor
 {
+	/// <summary>
+	/// A class that check when the selection change and that regroup some toolbar functions (for example GenerateCode)
+	/// </summary>
 	public class FlowGraphManager : IDisposable
 	{
 		public enum Status
@@ -53,7 +56,7 @@ namespace Com.Github.Knose1.Flow.Editor
 		}
 
 		/// <summary>
-		/// Create scriptable
+		/// Create scriptable object
 		/// </summary>
 		public void CreateAsset()
 		{

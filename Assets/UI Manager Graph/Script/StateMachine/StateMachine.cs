@@ -31,7 +31,11 @@ namespace Com.Github.Knose1.Flow.Engine.Machine
 		/// </summary>
 		protected MachineState endState;
 
-		[SerializeField] bool debug = false;
+		/// <summary>
+		/// Allow logs
+		/// </summary>
+		[SerializeField] private bool debug = false;
+		[SerializeField] public bool startOnAwake = true;
 
 		protected virtual void Awake()
 		{
@@ -41,7 +45,7 @@ namespace Com.Github.Knose1.Flow.Engine.Machine
 
 			SetupMachine();
 
-			StartMachine();
+			if (startOnAwake) StartMachine();
 		}
 
 		protected virtual void SetupMachine()
@@ -70,7 +74,7 @@ namespace Com.Github.Knose1.Flow.Engine.Machine
 			Thread thread = new Thread(this);
 			thread.OnDie += Thread_OnDie;
 			threads.Add(thread);
-#if UNITY_EDITOR
+#if UNITY_EDITOR || DEVELOPEMENT_BUILD
 			if (debug) Debug.Log(DEBUG_TAG + " Created thread, id : " + thread.Id);
 #endif
 			return thread;
@@ -111,7 +115,7 @@ namespace Com.Github.Knose1.Flow.Engine.Machine
 			}
 			if (triggers.Contains(trigger)) return;
 
-#if UNITY_EDITOR
+#if UNITY_EDITOR || DEVELOPEMENT_BUILD
 			if (debug) Debug.Log(DEBUG_TAG + " Set Trigger : " + trigger);
 #endif
 			bool hasTrigger = false;
@@ -155,7 +159,7 @@ namespace Com.Github.Knose1.Flow.Engine.Machine
 					}
 					alreadySeen.Add(state);
 					thread.SetState(state);
-#if UNITY_EDITOR
+#if UNITY_EDITOR || DEVELOPEMENT_BUILD
 					if (debug) Debug.Log(DEBUG_TAG + " New state on thread, id : " + thread.Id);
 #endif
 				}
@@ -166,7 +170,7 @@ namespace Com.Github.Knose1.Flow.Engine.Machine
 
 				if (++iterationCount > 100)
 				{
-					Debug.LogError("++x > 100");
+					Debug.LogError(DEBUG_TAG +nameof(iterationCount)+ " > 100");
 					break;
 				}
 			}
@@ -210,7 +214,7 @@ namespace Com.Github.Knose1.Flow.Engine.Machine
 		{
 			if (trigger == "") return; //Yep we can't remove "" triger
 
-#if UNITY_EDITOR
+#if UNITY_EDITOR || DEVELOPEMENT_BUILD
 			if (debug) Debug.Log(DEBUG_TAG + " Remove Trigger : " + trigger);
 #endif
 			if (triggers.Contains(trigger)) triggers.Remove(trigger);
@@ -233,7 +237,7 @@ namespace Com.Github.Knose1.Flow.Engine.Machine
 		{
 			threads.Remove(thread);
 			thread.OnDie -= Thread_OnDie;
-#if UNITY_EDITOR
+#if UNITY_EDITOR || DEVELOPEMENT_BUILD
 			if (debug) Debug.Log(DEBUG_TAG + " Ended thread, id : " + thread.Id);
 #endif
 		}
