@@ -1,8 +1,12 @@
-﻿using UnityEditor.Experimental.GraphView;
+﻿using Com.Github.Knose1.Flow.Engine.Settings.NodeData;
+using System;
+using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 
-namespace Com.Github.Knose1.UiManagerGraph.Node {
-	public class ConditionNode : UIManagerGraphNode
+namespace Com.Github.Knose1.Flow.Editor.Node
+{
+	[Obsolete]
+	public class ConditionNode : FlowGraphNode
 	{
 		protected const string CONDITION = "Condition";
 		protected const string IF = "If";
@@ -11,7 +15,6 @@ namespace Com.Github.Knose1.UiManagerGraph.Node {
 		public ConditionNode() : base()
 		{
 			title = CONDITION;
-			entryPoint = true;
 
 			elementTypeColor = Color.green;
 
@@ -19,7 +22,7 @@ namespace Com.Github.Knose1.UiManagerGraph.Node {
 			Port output = GeneratePort(Direction.Output, Port.Capacity.Single);
 			output.SetPortName(IF);
 			AddOutputElement(output);
-			
+
 			Port @else = GeneratePort(Direction.Output, Port.Capacity.Single);
 			@else.SetPortName(ELSE);
 			AddOutputElement(@else);
@@ -33,6 +36,16 @@ namespace Com.Github.Knose1.UiManagerGraph.Node {
 
 			RefreshExpandedState();
 			RefreshPorts();
+		}
+
+		public override NodeData Serialize()
+		{
+			return new ConditionNodeData(GetPosition().position);
+		}
+
+		public static ConditionNode FromData(ConditionNodeData data)
+		{
+			return new ConditionNode();
 		}
 	}
 }

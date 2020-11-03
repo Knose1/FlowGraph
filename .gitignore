@@ -343,3 +343,4 @@ healthchecksdb
 *.sln
 *.csproj
 /Assets/AssetStoreTools
+/CodeGraphData

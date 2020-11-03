@@ -1,0 +1,116 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 514937b7f687f3b4996934d27f571918, type: 3}
+  m_Name: FlowGraphScriptable
+  m_EditorClassIdentifier: 
+  nodes:
+    entryNode:
+      position: {x: -194, y: -92}
+      _isNotNull: 1
+      namespace: Com.Github.Knose1.Flow.Example
+      class: UIManagerGenerated
+    exitNode:
+    - position: {x: 1580, y: 36}
+      _isNotNull: 1
+    stateNodes:
+    - position: {x: 1158, y: -95}
+      _isNotNull: 1
+      name: StartGame
+      executionMode: 2
+      namespace: 
+      class: 
+      generateEvent: 0
+      ports:
+      - trigger: GameEnd
+        createThread: 0
+        id: 1
+    - position: {x: 603, y: -129}
+      _isNotNull: 1
+      name: Menu
+      executionMode: 1
+      namespace: Com.Github.Knose1.Flow.Example
+      class: Menu
+      generateEvent: 1
+      ports:
+      - trigger: StartGame
+        createThread: 0
+        id: 1
+      - trigger: Exit
+        createThread: 0
+        id: 2
+    - position: {x: 173, y: -93}
+      _isNotNull: 1
+      name: Titlecard
+      executionMode: 0
+      namespace: 
+      class: 
+      generateEvent: 0
+      ports:
+      - trigger: 
+        createThread: 0
+        id: 1
+    reroute:
+    - position: {x: 1608, y: -210}
+      _isNotNull: 1
+    - position: {x: 1355, y: 82}
+      _isNotNull: 1
+    - position: {x: 530, y: -210}
+      _isNotNull: 1
+    connections:
+    - input:
+        nodeId: 4
+        portId: 0
+      output:
+        nodeId: 0
+        portId: 0
+    - input:
+        nodeId: 1
+        portId: 0
+      output:
+        nodeId: 6
+        portId: 1
+    - input:
+        nodeId: 2
+        portId: 0
+      output:
+        nodeId: 3
+        portId: 1
+    - input:
+        nodeId: 5
+        portId: 0
+      output:
+        nodeId: 2
+        portId: 1
+    - input:
+        nodeId: 3
+        portId: 0
+      output:
+        nodeId: 7
+        portId: 1
+    - input:
+        nodeId: 3
+        portId: 0
+      output:
+        nodeId: 4
+        portId: 1
+    - input:
+        nodeId: 6
+        portId: 0
+      output:
+        nodeId: 3
+        portId: 2
+    - input:
+        nodeId: 7
+        portId: 0
+      output:
+        nodeId: 5
+        portId: 1
