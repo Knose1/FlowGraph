@@ -52,6 +52,9 @@ namespace Com.Github.Knose1.Flow.Editor
 			return true;
 		}
 
+		/// <summary>
+		/// Create scriptable
+		/// </summary>
 		public void CreateAsset()
 		{
 			throw new NotImplementedException();
@@ -79,6 +82,7 @@ namespace Com.Github.Knose1.Flow.Editor
 			string path = EditorUtility.SaveFilePanel(
 				title:"Generate Script", folderArg, _target.EntryNode.@class, "cs"
 			);
+			string assetPath = "Assets"+path.Replace(Application.dataPath, "");
 
 			if (path == "")
 			{
@@ -88,7 +92,22 @@ namespace Com.Github.Knose1.Flow.Editor
 
 			string classTemplate = AssetDatabase.LoadAssetAtPath<TextAsset>(FlowGraphAssetDatabase.CLASS_TEMPLATE).text;
 			string argsTemplate = AssetDatabase.LoadAssetAtPath<TextAsset>(FlowGraphAssetDatabase.ARGS_TEMPLATE).text;
-			string code = GraphCodeGenerator.Generate(classTemplate, JsonUtility.FromJson<TemplateJsonData>(argsTemplate), _target);
+			string code = GraphCodeGenerator.Generate(classTemplate, JsonUtility.FromJson<TemplateJsonData>(argsTemplate), _target.nodes);
+
+			if (File.Exists(path))
+			{
+				AssetDatabase.DeleteAsset(assetPath);
+				AssetDatabase.Refresh();
+			}
+
+			StreamWriter streamWriter = File.CreateText(path);
+			streamWriter.Write(code);
+			streamWriter.Close();
+
+			Debug.Log(assetPath);
+
+			AssetDatabase.Refresh();
+			EditorGUIUtility.PingObject(AssetDatabase.LoadAssetAtPath<MonoScript>(assetPath));
 
 			Debug.Log(DEBUG_PREFIX + " Code has been generated");
 		}

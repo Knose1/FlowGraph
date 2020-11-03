@@ -31,7 +31,7 @@ namespace Com.Github.Knose1.Flow.Editor
 		private TriggerList listView;
 
 		[MenuItem("Window/Game/Flow")]
-		static private void Init()
+		static public void Open()
 		{
 			FlowWindow window = GetWindow<FlowWindow>();
 			window.Show();

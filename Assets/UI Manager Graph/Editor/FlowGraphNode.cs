@@ -71,7 +71,7 @@ namespace Com.Github.Knose1.Flow.Editor
 
 		protected void SetNodeColor(Color color)
 		{
-			titleContainer.style.borderColor = color;
+			titleContainer.style.borderTopColor = color;
 			titleContainer.style.borderTopWidth = TITLE_BORDER_TOP_WIDTH;
 			elementTypeColor = color;
 		}

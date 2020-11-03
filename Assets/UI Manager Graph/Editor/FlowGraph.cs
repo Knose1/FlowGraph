@@ -266,7 +266,7 @@ namespace Com.Github.Knose1.Flow.Editor
 				}
 				else if (graphNode is TokenNode)
 				{
-					nodeData = new  RerouteData(graphNode.GetPosition().position);
+					nodeData = new RerouteData(graphNode.GetPosition().position);
 				}
 
 				tempDataAndVisualLinkage.Insert(0, new TempDataAndVisualLinkage(nodeData, graphNode));
@@ -306,7 +306,7 @@ namespace Com.Github.Knose1.Flow.Editor
 						int inputPortIndex = inputNode.GetPorts().IndexOf(inputPort);
 						int outputPortIndex = outputNode.GetPorts().IndexOf(outputPort);
 
-						ConnectorData connection = target.GetConnectorData(inputNodeData, inputPortIndex, outputNodeData, outputPortIndex);
+						ConnectorData connection = target.AddConnector(inputNodeData, inputPortIndex, outputNodeData, outputPortIndex);
 
 						if (!target.IsConnectionRegistered(connection))
 							target.connections.Add(connection);
@@ -331,6 +331,12 @@ namespace Com.Github.Knose1.Flow.Editor
 		/// <param name="nodes"></param>
 		protected List<ISelectable> GenerateGraphFromDatas(NodeDataList target, Vector2 offsetPosition = default)
 		{
+			if (target == null)
+			{
+				Debug.LogWarning("["+nameof(FlowGraph)+"] Can't parse data");
+				return new List<ISelectable>();
+			}
+
 			target.GetNodes(out List<NodeDataList.NodeAndIndex> nodes);
 			return GenerateGraphFromDatas(target, nodes, offsetPosition);
 		}
@@ -397,10 +403,10 @@ namespace Com.Github.Knose1.Flow.Editor
 			{
 				ConnectorData connection = connectorDatas[g];
 
-				PortData input = connection.input;
+				ConnectedPortData input = connection.input;
 				TempDataAndVisualLinkage inputNode = tempDataAndVisualLinkage[input.nodeId];
 
-				PortData output = connection.output;
+				ConnectedPortData output = connection.output;
 				TempDataAndVisualLinkage outputNode = tempDataAndVisualLinkage[output.nodeId];
 
 				if (!inputNode || !outputNode) continue;
@@ -611,7 +617,7 @@ namespace Com.Github.Knose1.Flow.Editor
 			}
 
 			selection = GenerateGraphFromDatas(JsonUtility.FromJson<NodeDataList>(data), new Vector2(50,50));
-
+			
 			foreach (ISelectable selectionItem in selection)
 			{
 				selectionItem.Select(this, true);

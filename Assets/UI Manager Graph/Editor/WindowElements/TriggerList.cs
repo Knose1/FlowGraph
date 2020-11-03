@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -17,7 +18,7 @@ namespace Com.Github.Knose1.Flow.Editor.WindowElements
 		{
 			this.StretchToParentSize();
 			style.width = 100;
-			style.backgroundColor = Color.red;
+			style.backgroundColor = (Color)(EditorGUIUtility.isProSkin ? new Color32(56, 56, 56, 255) : new Color32(194, 194, 194, 255));
 
 			StateNode.StateOutputPort.OnTriggerChange += StateOutputPort_OnTriggerChange;
 			name = nameof(TriggerList);

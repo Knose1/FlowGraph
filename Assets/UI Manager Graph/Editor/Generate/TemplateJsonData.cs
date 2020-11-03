@@ -20,5 +20,6 @@
 		public string ADD_TRIGGERS;
 		public string ADD_EVENTS;
 		public string ENTRY_STATE;
+		public string END_STATE;
 	}
 }

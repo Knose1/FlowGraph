@@ -454,10 +454,13 @@ namespace Com.Github.Knose1.Flow.Editor.Node
 			List<StateNodeData.StateNodePort> toReturn = new List<StateNodeData.StateNodePort>();
 
 			int count = stateOutputPorts.Count;
+			List<Port> nodesPorts = NodeHelper.GetPorts(this);
 			for (int i = 0; i < count; i++)
 			{
 				StateOutputPort port = stateOutputPorts[i];
-				toReturn.Add(port.GetData());
+				StateNodeData.StateNodePort item = port.GetData();
+				item.id = nodesPorts.IndexOf(port.Port);
+				toReturn.Add(item);
 			}
 
 			return toReturn;

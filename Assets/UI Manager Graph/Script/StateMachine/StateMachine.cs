@@ -7,6 +7,8 @@ namespace Com.Github.Knose1.Flow.Engine.Machine
 {
 	public abstract class StateMachine : MonoBehaviour
 	{
+		public const string END_STATE = nameof(endState);
+
 		/// <summary>
 		/// List of allowed triggers
 		/// </summary>

@@ -5,11 +5,13 @@
 		"CREATE_STATES": "#{L_STATE_NAME}#State = new MachineState();"
 	},
 	"GoState": {
+		"EVENTS": "public event Action On#{H_STATE_NAME}#;",
 		"GO_FIELDS": "[SerializeField] protected GameObject #{L_STATE_NAME}#;",
 		"STATES": "protected GameObjectMachineState #{L_STATE_NAME}#State;",
 		"CREATE_STATES": "#{L_STATE_NAME}#State = new GameObjectMachineState(#{L_STATE_NAME}#);"
 	},
 	"ClassMachineState": {
+		"EVENTS": "public event Action On#{H_STATE_NAME}#;",
 		"CLASS_FIELDS": "protected #{NAMESPACE}#.#{CLASS}# #{L_STATE_NAME}# = new #{NAMESPACE}#.#{CLASS}#();",
 		"STATES": "protected ClassMachineState #{L_STATE_NAME}#State;",
 		"CREATE_STATES": "#{L_STATE_NAME}#State = new ClassMachineState(#{L_STATE_NAME}#);"
@@ -17,5 +19,6 @@
 	"ALLOW_TRIGGERS": "AllowTrigger(\"#{TRIGGER}#\");",
 	"ADD_TRIGGERS": "#{L_STATE_NAME_0}#State.AddTrigger(\"#{TRIGGER}#\",#{L_STATE_NAME_1}#State, #{CREATE_THREAD}#);",
 	"ADD_EVENTS": "#{L_STATE_NAME}#State.OnStart += (Thread thread) => { On#{H_STATE_NAME}#?.Invoke(); };",
-	"ENTRY_STATE": "#{L_STATE_NAME}#State"
+	"ENTRY_STATE": "protected override void EntryPoint(Thread mainThread)\r\n{\r\n\tmainThread.SetState(#{L_STATE_NAME}#State);\r\n}",
+	"END_STATE": "#{L_STATE_NAME}#State.AddTrigger(\"#{TRIGGER}#\", #{END_STATE}#);"
 }

@@ -36,9 +36,6 @@ namespace #{NAMESPACE}#
 			#{ADD_EVENTS}#
 		}
 
-		protected override void EntryPoint(Thread mainThread)
-		{
-			mainThread.SetState(#{ENTRY_STATE}#);
-		}
+		#{ENTRY_STATE}#
 	}
 }

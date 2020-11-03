@@ -1,5 +1,4 @@
-﻿//Generated class
-//If you need to modify the class, override it
+﻿//Intended result
 
 
 using System;
