@@ -630,6 +630,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   debug: 1
+  startOnAwake: 1
   titlecard: {fileID: 300853052}
 --- !u!114 &653190422
 MonoBehaviour:

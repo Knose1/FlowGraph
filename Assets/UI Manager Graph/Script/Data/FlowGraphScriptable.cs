@@ -532,7 +532,8 @@ namespace Com.Github.Knose1.Flow.Engine.Settings.NodeData
 		{
 			Instantiate,
 			Constructor,
-			Event
+			Event,
+			Empty
 		}
 
 		[SerializeField] public string name;
@@ -575,8 +576,17 @@ namespace Com.Github.Knose1.Flow.Engine.Settings.NodeData
 	[Serializable]
 	public class ExitNodeData : NodeData
 	{
-		public ExitNodeData(Vector2 position) : base(position)
+		public enum ExitType
 		{
+			StopThread,
+			StopMachine
+		}
+		
+		[SerializeField] public ExitType exitType;
+
+		public ExitNodeData(Vector2 position, ExitType exitType) : base(position)
+		{
+			this.exitType = exitType;
 		}
 	}
 

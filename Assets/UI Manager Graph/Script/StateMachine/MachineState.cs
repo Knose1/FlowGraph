@@ -15,10 +15,14 @@ namespace Com.Github.Knose1.Flow.Engine.Machine.State
 	/// </summary>
 	public class MachineState
 	{
+		public readonly string name;
 		public List<TriggerData> triggers = new List<TriggerData>();
+
 		public event Action<Thread> OnStart;
 
-		public MachineState() { }
+		public MachineState(string name) {
+			this.name = name;
+		}
 
 		public virtual void Start(Thread thread)
 		{
@@ -47,7 +51,7 @@ namespace Com.Github.Knose1.Flow.Engine.Machine.State
 	public class ClassMachineState : MachineState
 	{
 		public IState target;
-		public ClassMachineState(IState target)
+		public ClassMachineState(string name, IState target) : base(name)
 		{
 			this.target = target;
 		}
@@ -76,7 +80,7 @@ namespace Com.Github.Knose1.Flow.Engine.Machine.State
 	public class GameObjectMachineState : MachineState
 	{
 		public GameObject target;
-		public GameObjectMachineState(GameObject target)
+		public GameObjectMachineState(string name, GameObject target) : base(name)
 		{
 			this.target = target;
 		}

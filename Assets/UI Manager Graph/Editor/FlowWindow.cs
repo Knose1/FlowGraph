@@ -43,9 +43,11 @@ namespace Com.Github.Knose1.Flow.Editor
 		{
 			OnDisable(); //Just In Case
 
-			manager = new FlowGraphManager();
+			if (manager == null)
+				manager = new FlowGraphManager();
+			
 			manager.OnSelectionStatusChange += Manager_OnSelectionStatusChange;
-
+			
 			GenerateGraph();
 			//GenerateTriggerList();
 			GenerateToolbar();

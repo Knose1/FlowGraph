@@ -30,6 +30,7 @@ namespace Com.Github.Knose1.Flow.Editor.Node
 			public Port Port => _port;
 
 			private TextField triggerField;
+			private Toggle createThreadField;
 			private VisualElement portContainer;
 			private Button portRemoveButton;
 
@@ -40,6 +41,14 @@ namespace Com.Github.Knose1.Flow.Editor.Node
 				{ 
 					SetPortName(triggerField.value = value);
 					ComputeTriggersAndSentEvent(); 
+				}
+			}
+			public bool CreateThread
+			{
+				get => createThreadField.value;
+				set 
+				{
+					createThreadField.value = value;
 				}
 			}
 
@@ -79,6 +88,13 @@ namespace Com.Github.Knose1.Flow.Editor.Node
 				UIManagerGraphNodeExtend.CorrectLabel(triggerField.labelElement);
 				Add(triggerField);
 
+				//Create Thread Field
+				createThreadField = new Toggle("Create Thread");
+				createThreadField.style.width = 120;
+				UIManagerGraphNodeExtend.CorrectLabel(createThreadField.labelElement);
+				UIManagerGraphNodeExtend.CorrectToggle(createThreadField);
+				Add(createThreadField);
+
 
 				//Port Container
 				portContainer = new VisualElement();
@@ -113,7 +129,8 @@ namespace Com.Github.Knose1.Flow.Editor.Node
 			{
 				StateNodeData.StateNodePort data = new StateNodeData.StateNodePort
 				{
-					trigger = Trigger
+					trigger = Trigger,
+					createThread = CreateThread
 				};
 
 				return data;
@@ -122,6 +139,7 @@ namespace Com.Github.Knose1.Flow.Editor.Node
 			public void FromData(StateNodeData.StateNodePort data)
 			{
 				Trigger = data.trigger;
+				CreateThread = data.createThread;
 			}
 
 			public void Dispose()
@@ -161,6 +179,7 @@ namespace Com.Github.Knose1.Flow.Editor.Node
 		protected Color INSTANTIATE_COLOR = Color.cyan;
 		protected Color CONSTRUCTOR_COLOR = new Color(0.6f, 1f,0.6f);
 		protected Color EVENT_COLOR = new Color(177/255f, 160/255f, 246/255f);
+		protected Color EMPTY_COLOR = Color.white / 3;
 
 		//*/////////////////////////////////////*//
 		//                                       //
@@ -265,7 +284,7 @@ namespace Com.Github.Knose1.Flow.Editor.Node
 			RegisterField(nameField);
 			AddInspectorElement(nameField); //Add to inspector
 
-			//CreationMode field
+			//Creation Mode field
 			executionModeField = new EnumField("Execution Mode", StateNodeData.Execution.Instantiate);
 			UIManagerGraphNodeExtend.CorrectLabel(executionModeField.labelElement);
 			executionModeField.style.width = 160;
@@ -391,6 +410,9 @@ namespace Com.Github.Knose1.Flow.Editor.Node
 					SetNodeColor(EVENT_COLOR);
 
 					AddInspectorElement(eventTextElement);
+					return;
+				case StateNodeData.Execution.Empty:
+					SetNodeColor(EMPTY_COLOR);
 					return;
 
 				default: 

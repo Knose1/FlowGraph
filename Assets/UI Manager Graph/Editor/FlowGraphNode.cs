@@ -217,7 +217,7 @@ namespace Com.Github.Knose1.Flow.Editor
 
 		public static void CorrectToggle(VisualElement elm)
 		{
-			elm.style.marginBottom = 2;
+			elm.style.marginBottom = 3;
 		}
 
 		/// <summary>

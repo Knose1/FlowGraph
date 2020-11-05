@@ -2,12 +2,14 @@
 using Com.Github.Knose1.Flow.Engine.Machine.State;
 using System.Collections.Generic;
 using UnityEngine;
+using System.Linq;
 
 namespace Com.Github.Knose1.Flow.Engine.Machine
 {
 	public abstract class StateMachine : MonoBehaviour
 	{
 		public const string END_STATE = nameof(endState);
+		public const string STOP_STATE = nameof(stopState);
 
 		/// <summary>
 		/// List of allowed triggers
@@ -24,7 +26,28 @@ namespace Com.Github.Knose1.Flow.Engine.Machine
 		/// </summary>
 		private List<Thread> threads;
 
-		protected const string DEBUG_TAG = "["+nameof(StateMachine)+"]";
+		public Thread GetThreadById(int id)
+		{
+			for (int i = threads.Count - 1; i >= 0; i--)
+			{
+				Thread thread = threads[i];
+				if (thread.Id == id) 
+					return thread;
+			}
+
+			return null;
+		}
+
+		private string _debugTag = null;
+		public string DebugTag
+		{
+			get
+			{
+				if (_debugTag != null) return _debugTag;
+
+				return _debugTag = "[" + GetType().Name + "]";
+			}
+		}
 
 		/// <summary>
 		/// A state that calls <see cref="Thread.Die"/> on start
@@ -32,21 +55,33 @@ namespace Com.Github.Knose1.Flow.Engine.Machine
 		protected MachineState endState;
 
 		/// <summary>
+		/// A state that calls <see cref="StopMachine()"/> on start
+		/// </summary>
+		protected MachineState stopState;
+
+		/// <summary>
 		/// Allow logs
 		/// </summary>
-		[SerializeField] private bool debug = false;
+		[SerializeField] private bool _debug = false;
+		public bool IsDebug => _debug;
+
 		[SerializeField] public bool startOnAwake = true;
 
 		protected virtual void Awake()
 		{
 			allowedTriggers = new List<string>();
-			endState = new MachineState();
+			endState = new MachineState("end");
 			endState.OnStart += EndState_OnStart;
+
+			stopState = new MachineState("stop");
+			stopState.OnStart += StopState_OnStart;
 
 			SetupMachine();
 
 			if (startOnAwake) StartMachine();
 		}
+
+		private void StopState_OnStart(Thread obj) => StopMachine();
 
 		protected virtual void SetupMachine()
 		{
@@ -75,7 +110,7 @@ namespace Com.Github.Knose1.Flow.Engine.Machine
 			thread.OnDie += Thread_OnDie;
 			threads.Add(thread);
 #if UNITY_EDITOR || DEVELOPEMENT_BUILD
-			if (debug) Debug.Log(DEBUG_TAG + " Created thread, id : " + thread.Id);
+			if (IsDebug) Debug.Log(DebugTag + " Created thread, id : " + thread.Id);
 #endif
 			return thread;
 		}
@@ -106,28 +141,30 @@ namespace Com.Github.Knose1.Flow.Engine.Machine
 		/// To remove a trigger, use <see cref="RemoveTrigger"/>
 		/// </summary>
 		/// <param name="trigger">The trigger to set</param>
-		public void SetTrigger(string trigger)
+		/// <param name="keep">If true, the trigger will be kept for a future state</param>
+		public void SetTrigger(string trigger, bool keep = true)
 		{
 			if (!allowedTriggers.Contains(trigger))
 			{
-				Debug.LogWarning(DEBUG_TAG + " \""+trigger+"\" is not an allowed trigger");
+				Debug.LogWarning(DebugTag + " \""+trigger+"\" is not an allowed trigger");
 				return;
 			}
 			if (triggers.Contains(trigger)) return;
 
 #if UNITY_EDITOR || DEVELOPEMENT_BUILD
-			if (debug) Debug.Log(DEBUG_TAG + " Set Trigger : " + trigger);
+			if (IsDebug) Debug.Log(DebugTag + " Set Trigger : " + trigger);
 #endif
 			bool hasTrigger = false;
 
-
-			for (int i = 0; i < threads.Count; i++)
+			var lList = threads.ToList();
+			int count = lList.Count;
+			for (int i = 0; i < count; i++)
 			{
-				ExecuteTrigger(threads[i], trigger, out bool hasTrigger2);
+				ExecuteTrigger(lList[i], trigger, out bool hasTrigger2);
 				hasTrigger = hasTrigger2 || hasTrigger;
 			}
 
-			if (!hasTrigger) triggers.Add(trigger);
+			if (!hasTrigger && keep) triggers.Add(trigger);
 		}
 
 		/// <summary>
@@ -149,19 +186,18 @@ namespace Com.Github.Knose1.Flow.Engine.Machine
 
 			do
 			{
-				MachineState state = thread.GetState(trigger, out createThread, alreadySeen);
+				MachineState state = thread.GetNextState(trigger, out createThread, alreadySeen);
 				if (state != null)
 				{
 					hasTrigger = true;
+
+					Thread threadToSet = thread;
 					if (createThread)
 					{
-						thread = CreateThread();
+						threadToSet = CreateThread();
 					}
 					alreadySeen.Add(state);
-					thread.SetState(state);
-#if UNITY_EDITOR || DEVELOPEMENT_BUILD
-					if (debug) Debug.Log(DEBUG_TAG + " New state on thread, id : " + thread.Id);
-#endif
+					threadToSet.SetState(state, !createThread && iterationCount != 0);
 				}
 				else
 				{
@@ -170,7 +206,7 @@ namespace Com.Github.Knose1.Flow.Engine.Machine
 
 				if (++iterationCount > 100)
 				{
-					Debug.LogError(DEBUG_TAG +nameof(iterationCount)+ " > 100");
+					Debug.LogError(DebugTag +nameof(iterationCount)+ " > 100");
 					break;
 				}
 			}
@@ -215,16 +251,18 @@ namespace Com.Github.Knose1.Flow.Engine.Machine
 			if (trigger == "") return; //Yep we can't remove "" triger
 
 #if UNITY_EDITOR || DEVELOPEMENT_BUILD
-			if (debug) Debug.Log(DEBUG_TAG + " Remove Trigger : " + trigger);
+			if (IsDebug) Debug.Log(DebugTag + " Remove Trigger : " + trigger);
 #endif
 			if (triggers.Contains(trigger)) triggers.Remove(trigger);
 		}
 
 		private void Update()
 		{
-			for (int i = threads.Count - 1; i >= 0; i--)
+			var lList = threads.ToList();
+			int count = lList.Count;
+			for (int i = 0; i < count; i++)
 			{
-				threads[i].Update();
+				lList[i].Update();
 			}
 		}
 
@@ -238,7 +276,7 @@ namespace Com.Github.Knose1.Flow.Engine.Machine
 			threads.Remove(thread);
 			thread.OnDie -= Thread_OnDie;
 #if UNITY_EDITOR || DEVELOPEMENT_BUILD
-			if (debug) Debug.Log(DEBUG_TAG + " Ended thread, id : " + thread.Id);
+			if (IsDebug) Debug.Log(DebugTag + " Ended thread, id : " + thread.Id);
 #endif
 		}
 	}

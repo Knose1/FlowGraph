@@ -28,9 +28,9 @@ namespace Com.Github.Knose1.Flow.Example
 		{
 			base.SetupMachine();
 
-			titlecardState = new GameObjectMachineState(titlecard);
-			menuState = new ClassMachineState(menu);
-			startGameState = new MachineState();
+			titlecardState = new GameObjectMachineState("Titlecard",titlecard);
+			menuState = new ClassMachineState("Menu", menu);
+			startGameState = new MachineState("StartGame");
 
 			AllowTrigger("CountDown");
 			AllowTrigger("StartGame");

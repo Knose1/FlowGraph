@@ -1,7 +1,6 @@
 ﻿using Com.Github.Knose1.Flow.Engine.Machine;
 using Com.Github.Knose1.Flow.Engine.Settings;
 using Com.Github.Knose1.Flow.Engine.Settings.NodeData;
-using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
@@ -12,7 +11,8 @@ namespace Com.Github.Knose1.Flow.Editor.Generate
 	/// </summary>
 	public static class GraphCodeGenerator
 	{
-		private const string END_STATE         = "END_STATE";
+		private const string END_STATE      = "END_STATE";
+		private const string STOP_STATE      = "STOP_STATE";
 
 		private const string EVENTS         = "EVENTS";
 		private const string GO_FIELDS      = "GO_FIELDS";
@@ -44,6 +44,7 @@ namespace Com.Github.Knose1.Flow.Editor.Generate
 
 		#region REGEX
 		private readonly static Regex END_STATE_REGEX       = new Regex(Regex.Escape(PREFIX+ END_STATE      +SUFFIX));
+		private readonly static Regex STOP_STATE_REGEX      = new Regex(Regex.Escape(PREFIX+ STOP_STATE      +SUFFIX));
 
 		private readonly static Regex EVENTS_REGEX          = new Regex(Regex.Escape(PREFIX+ EVENTS			+SUFFIX));
 		private readonly static Regex GO_FIELDS_REGEX       = new Regex(Regex.Escape(PREFIX+ GO_FIELDS		+SUFFIX));
@@ -88,16 +89,19 @@ namespace Com.Github.Knose1.Flow.Editor.Generate
 		/// <returns></returns>
 		private static string ReplaceJsonDataTemplate(string input, string @namespace, string @class, string hStateName, string lStateName, string trigger, string createThread)
 		{
+			MatchCollection endStateMatch = END_STATE_REGEX.Matches(input);
+			MatchCollection stopStateMatch = STOP_STATE_REGEX.Matches(input);
+
 			MatchCollection namespaceMatch = NAMESPACE_REGEX.Matches(input);
 			MatchCollection classMatch = CLASS_REGEX.Matches(input);
 			MatchCollection hStateMatch = H_STATE_NAME_REGEX.Matches(input);
 			MatchCollection lStateMatch = L_STATE_NAME_REGEX.Matches(input);
 			MatchCollection triggerMatch = TRIGGER_REGEX.Matches(input);
 			MatchCollection createThreadMatch = CREATE_THREAD_REGEX.Matches(input);
-			MatchCollection endStateMatch = END_STATE_REGEX.Matches(input);
 
 			List<MatchAndReplacer> replacers = MatchAndReplacer.JoinMultiple(
 				MatchAndReplacer.GetMatchAndReplacers(endStateMatch, StateMachine.END_STATE),
+				MatchAndReplacer.GetMatchAndReplacers(stopStateMatch, StateMachine.STOP_STATE),
 				MatchAndReplacer.GetMatchAndReplacers(namespaceMatch, @namespace),
 				MatchAndReplacer.GetMatchAndReplacers(classMatch, @class),
 				MatchAndReplacer.GetMatchAndReplacers(hStateMatch, hStateName),
@@ -135,6 +139,9 @@ namespace Com.Github.Knose1.Flow.Editor.Generate
 			string @namespace_1, string @class_1, string hStateName_1, string lStateName_1
 		)
 		{
+			MatchCollection endStateMatch = END_STATE_REGEX.Matches(input);
+			MatchCollection stopStateMatch = STOP_STATE_REGEX.Matches(input);
+
 			MatchCollection namespaceMatch_0 = NAMESPACE_0_REGEX.Matches(input);
 			MatchCollection classMatch_0 = CLASS_0_REGEX.Matches(input);
 			MatchCollection hStateMatch_0 = H_STATE_NAME_0_REGEX.Matches(input);
@@ -148,6 +155,9 @@ namespace Com.Github.Knose1.Flow.Editor.Generate
 			MatchCollection lStateMatch_1 = L_STATE_NAME_1_REGEX.Matches(input);
 
 			List<MatchAndReplacer> replacers = MatchAndReplacer.JoinMultiple(
+				MatchAndReplacer.GetMatchAndReplacers(endStateMatch, StateMachine.END_STATE),
+				MatchAndReplacer.GetMatchAndReplacers(stopStateMatch, StateMachine.STOP_STATE),
+
 				MatchAndReplacer.GetMatchAndReplacers(namespaceMatch_0, @namespace_0),
 				MatchAndReplacer.GetMatchAndReplacers(classMatch_0, @class_0),
 				MatchAndReplacer.GetMatchAndReplacers(hStateMatch_0, hStateName_0),
@@ -262,6 +272,9 @@ namespace Com.Github.Knose1.Flow.Editor.Generate
 					case StateNodeData.Execution.Event:
 						LAddState(dataTemplate.EventState, state.executionMode, true);
 						break;
+					case StateNodeData.Execution.Empty:
+						LAddState(dataTemplate.EmptyState, state.executionMode, false);
+						break;
 				}
 
 				//Iterate on each output port of the nodes to generate the connections
@@ -296,7 +309,20 @@ namespace Com.Github.Knose1.Flow.Editor.Generate
 						if (otherNode is ExitNodeData)
 						{
 							//If exit, generate exit
-							addTriggers.Add(ReplaceJsonDataTemplate(dataTemplate.END_STATE, @namespace, @class, hStateName, lStateName, trigger, FALSE));
+							string jsonDataTemplate = "";
+							switch ((otherNode as ExitNodeData).exitType)
+							{
+								case ExitNodeData.ExitType.StopThread:
+									jsonDataTemplate = dataTemplate.END_STATE;
+									break;
+								case ExitNodeData.ExitType.StopMachine:
+									jsonDataTemplate = dataTemplate.STOP_STATE;
+									break;
+								default:
+									break;
+							}
+
+							addTriggers.Add(ReplaceJsonDataTemplate(jsonDataTemplate, @namespace, @class, hStateName, lStateName, trigger, FALSE));
 							continue;
 						}
 
@@ -353,6 +379,9 @@ namespace Com.Github.Knose1.Flow.Editor.Generate
 			MatchCollection entryStateMatch     = ENTRY_STATE_REGEX.Matches(template);
 
 			string LJoin(IList<string> str, string join = "") {
+				if (str.Count == 0) return "";
+				if (str.Count == 1) return str[0];
+
 				string toRet = "";
 				int count = str.Count;
 				
@@ -395,18 +424,77 @@ namespace Com.Github.Knose1.Flow.Editor.Generate
 
 		private static string Replace(this string input, List<MatchAndReplacer> matchAndReplacers)
 		{
+			const string NEXT_LINE = "\r\n|\n";
+			Regex newLine = new Regex(NEXT_LINE);
+			Regex tabCounter = new Regex("^\t|(?<=\t)\t");
 			int indexDifference = 0;
 
 			foreach (MatchAndReplacer item in matchAndReplacers)
 			{
+				MatchCollection lines = newLine.Matches(input);
 				Match match = item.match;
 				string replacer = item.replacer;
 
-				input = input.Remove(indexDifference + match.Index, match.Length).Insert(indexDifference + match.Index, replacer);
+				int startIndex = indexDifference + match.Index;
+				int numberTab = 0;
+
+				{
+					int firstBefore = GetFirstIndexBefore(lines, startIndex);
+					int firstAfter = GetFirstIndexAfter(lines, startIndex, input.Length);
+
+					numberTab = tabCounter.Matches(input.Substring(firstBefore, firstAfter - firstBefore)).Count;
+				}
+
+				replacer = newLine.Replace(replacer, "$&"+MultiplyString("\t", numberTab));
+
+				input = input.Remove(startIndex, match.Length).Insert(startIndex, replacer);
 				indexDifference += replacer.Length - match.Length;
 			}
 
 			return input;
+		}
+
+		private static string MultiplyString(string toMultiply, int count)
+		{
+			string toReturn = "";
+			for (int i = 0; i < count; i++)
+			{
+				toReturn += toMultiply;
+			}
+
+			return toReturn;
+		}
+
+		private static int GetFirstIndexBefore(MatchCollection matchCollection, int maxIndexInString)
+		{
+			int matchIndex = 0;
+			for (int i = 0; i < matchCollection.Count; i++)
+			{
+				Match m = matchCollection[i];
+				int index = m.Index + m.Length;
+				if (index < maxIndexInString && index > matchIndex)
+				{
+					matchIndex = index;
+				}
+			}
+
+			return matchIndex;
+		}
+
+		private static int GetFirstIndexAfter(MatchCollection matchCollection, int minIndexInString, int stringLength)
+		{
+			int matchIndex = stringLength;
+			for (int i = 0; i < matchCollection.Count; i++)
+			{
+				Match m = matchCollection[i];
+				int index = m.Index;
+				if (index > minIndexInString && index < matchIndex)
+				{
+					matchIndex = index;
+				}
+			}
+
+			return matchIndex;
 		}
 
 		private struct MatchAndReplacer

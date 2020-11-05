@@ -13,6 +13,7 @@
 	[System.Serializable]
 	public struct TemplateJsonData
 	{
+		public GeneratePosition EmptyState;
 		public GeneratePosition EventState;
 		public GeneratePosition GoState;
 		public GeneratePosition ClassMachineState;
@@ -21,5 +22,6 @@
 		public string ADD_EVENTS;
 		public string ENTRY_STATE;
 		public string END_STATE;
+		public string STOP_STATE;
 	}
 }
