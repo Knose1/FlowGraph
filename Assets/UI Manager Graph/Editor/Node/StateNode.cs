@@ -186,6 +186,8 @@ namespace Com.Github.Knose1.Flow.Editor.Node
 
 				//triggerField.style.width = 300;
 				//triggerField.style.height = 200;
+
+				ComputeTriggersAndSentEvent();
 			}
 
 			private void ThreadField_OnValueChanged(ChangeEvent<bool> evt)
