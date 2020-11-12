@@ -14,26 +14,90 @@ namespace Com.Github.Knose1.Flow.Editor.WindowElements
 	{
 		ListView listView;
 
+		List<string> labels;
+		private StateNode.StateOutputPort.DelegateTriggerSelected callback;
+
 		public TriggerList()
 		{
-			this.StretchToParentSize();
-			style.width = 100;
-			style.backgroundColor = (Color)(EditorGUIUtility.isProSkin ? new Color32(56, 56, 56, 255) : new Color32(194, 194, 194, 255));
+			this.name = nameof(TriggerList);
+			this.AddToClassList(nameof(TriggerList));
 
+			this.StretchToParentSize();
+			
 			StateNode.StateOutputPort.OnTriggerChange += StateOutputPort_OnTriggerChange;
 			name = nameof(TriggerList);
-			listView = new ListView();
+
+			TextElement title = new TextElement();
+			title.text = "Trigger List";
+			Add(title);
+
+			GenerateListView();
+		}
+
+		private void GenerateListView()
+		{
+			// The "makeItem" function will be called as needed
+			// when the ListView needs more items to render
+			Func<VisualElement> makeItem = () => new Label();
+
+			// As the user scrolls through the list, the ListView object
+			// will recycle elements created by the "makeItem"
+			// and invoke the "bindItem" callback to associate
+			// the element with the matching data item (specified as an index in the list)
+			Action<VisualElement, int> bindItem = (e, i) => (e as Label).text = "\'"+labels[i]+"\'";
+
+			const int itemHeight = 16;
+
+			listView = new ListView(labels, itemHeight, makeItem, bindItem);
+			listView.selectionType = SelectionType.Single;
+			listView.onSelectionChanged += ListView_onSelectionChanged; ;
+			listView.onItemChosen += ListView_onItemChosen;
+			listView.style.flexGrow = 1.0f;
+
 			Add(listView);
 		}
 
-		private void StateOutputPort_OnTriggerChange(List<string> obj)
+		private void ListView_onSelectionChanged(List<object> obj)
 		{
-			listView.itemsSource = obj;
+			if (obj.Count > 0) ListView_onItemChosen(obj[0]);
+			else ListView_onItemChosen(null);
+		}
+
+		private void ListView_onItemChosen(object obj)
+		{
+			string label = (obj as string);
+			callback(label);
+		}
+
+		private void StateOutputPort_OnTriggerChange(List<string> triggers, StateNode.StateOutputPort.DelegateTriggerSelected callback)
+		{
+			this.callback = callback;
+			List<string> labels = new List<string>();
+			foreach (var item in triggers)
+			{
+				if (labels.Contains(item)) continue;
+
+				labels.Add(item);
+			}
+
+			labels.Sort((string a, string b) => a.Length - b.Length);
+
+			this.labels = labels;
+			listView.itemsSource = this.labels;
+			ListView_onItemChosen(listView.selectedItem);
 		}
 
 		public void Dispose()
 		{
 			StateNode.StateOutputPort.OnTriggerChange -= StateOutputPort_OnTriggerChange;
+		}
+
+		public class TriggerListElement : VisualElement
+		{
+			public TriggerListElement()
+			{
+
+			}
 		}
 	}
 }

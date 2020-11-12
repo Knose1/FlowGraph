@@ -10,23 +10,20 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 514937b7f687f3b4996934d27f571918, type: 3}
-  m_Name: FlowGraphScriptable
+  m_Name: TestAdd
   m_EditorClassIdentifier: 
   nodes:
     entryNode:
-      position: {x: -213, y: -92}
+      position: {x: 100, y: 200}
       _isNotNull: 1
-      namespace: Com.Github.Knose1.Flow.Example
-      class: UIManagerGenerated
-    exitNode:
-    - position: {x: 1546, y: 50}
-      _isNotNull: 1
-      exitType: 0
+      namespace: Hello
+      class: 
+    exitNode: []
     stateNodes:
-    - position: {x: 124, y: -90}
+    - position: {x: 528, y: 189}
       _isNotNull: 1
-      name: Titlecard
-      executionMode: 0
+      name: Hi
+      executionMode: 2
       namespace: 
       class: 
       generateEvent: 0
@@ -34,39 +31,25 @@ MonoBehaviour:
       - trigger: 
         createThread: 0
         id: 1
-    - position: {x: 603, y: -129}
+    - position: {x: 1112, y: 250}
       _isNotNull: 1
-      name: Menu
-      executionMode: 1
-      namespace: Com.Github.Knose1.Flow.Example
-      class: Menu
-      generateEvent: 1
-      ports:
-      - trigger: StartGame
-        createThread: 0
-        id: 1
-      - trigger: Exit
-        createThread: 0
-        id: 2
-    - position: {x: 1158, y: -95}
-      _isNotNull: 1
-      name: StartGame
+      name: OwO
       executionMode: 2
       namespace: 
       class: 
       generateEvent: 0
       ports:
-      - trigger: GameEnd
+      - trigger: 
         createThread: 0
         id: 1
     reroute:
-    - position: {x: 502, y: -236}
+    - position: {x: 1587, y: -5}
       _isNotNull: 1
-    - position: {x: 1642, y: -242}
+    - position: {x: 400, y: -5}
       _isNotNull: 1
     connections:
     - input:
-        nodeId: 2
+        nodeId: 1
         portId: 0
       output:
         nodeId: 0
@@ -75,8 +58,14 @@ MonoBehaviour:
         nodeId: 1
         portId: 0
       output:
-        nodeId: 3
-        portId: 2
+        nodeId: 4
+        portId: 1
+    - input:
+        nodeId: 2
+        portId: 0
+      output:
+        nodeId: 1
+        portId: 1
     - input:
         nodeId: 3
         portId: 0
@@ -84,26 +73,8 @@ MonoBehaviour:
         nodeId: 2
         portId: 1
     - input:
-        nodeId: 3
-        portId: 0
-      output:
-        nodeId: 5
-        portId: 1
-    - input:
         nodeId: 4
         portId: 0
       output:
         nodeId: 3
-        portId: 1
-    - input:
-        nodeId: 6
-        portId: 0
-      output:
-        nodeId: 4
-        portId: 1
-    - input:
-        nodeId: 5
-        portId: 0
-      output:
-        nodeId: 6
         portId: 1

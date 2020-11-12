@@ -1,7 +1,9 @@
-﻿using Com.Github.Knose1.Flow.Engine.Settings.NodeData;
+﻿using Com.Github.Knose1.Common;
+using Com.Github.Knose1.Flow.Engine.Settings.NodeData;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -22,6 +24,7 @@ namespace Com.Github.Knose1.Flow.Editor
 
 		private const int TITLE_BORDER_TOP_WIDTH = 2;
 
+		public const string CLASS = nameof(FlowGraphNode);
 		protected const string NEXT = "Next";
 		protected const string OUTPUT = "Output";
 		protected const string INPUT = "Input";
@@ -29,6 +32,7 @@ namespace Com.Github.Knose1.Flow.Editor
 		protected VisualElement inspectorElement;
 		private List<Port> _ports = new List<Port>();
 
+		protected static readonly System.Text.RegularExpressions.Regex VarCorrector = new System.Text.RegularExpressions.Regex("(?![a-zA-Z][a-zA-Z0-9]})");
 		/// <summary>
 		/// Node's ports
 		/// </summary>
@@ -38,7 +42,8 @@ namespace Com.Github.Knose1.Flow.Editor
 		protected FlowGraphNode(Vector2 startSize) : base()
 		{
 			SetPosition(new Rect(Vector2.zero, startSize));
-			
+
+			this.AddToClassList(CLASS);
 			capabilities ^= Capabilities.Collapsible;
 
 			inspectorElement = new VisualElement();
@@ -69,16 +74,23 @@ namespace Com.Github.Knose1.Flow.Editor
 			titleContainer.style.borderTopWidth = 0;
 		}
 
-		protected void SetNodeColor(Color color)
+		protected virtual Color GetNodeColor() => elementTypeColor;
+		protected virtual void SetNodeColor(Color color)
 		{
 			titleContainer.style.borderTopColor = color;
 			titleContainer.style.borderTopWidth = TITLE_BORDER_TOP_WIDTH;
 			elementTypeColor = color;
+
+			List<Port> ports = this.GetPorts();
+			foreach (Port item in ports)
+			{
+				item.portColor = color;
+			}
 		}
 
 		public override Port InstantiatePort(Orientation orientation, Direction direction, Port.Capacity capacity, Type type)
 		{
-			return Port.Create<FlowGraphEdge>(orientation, direction, capacity, type);
+			return FlowGraphPort.Create(orientation, direction, capacity, type);
 		}
 
 		protected Port GeneratePort(Direction direction, Port.Capacity capacity = Port.Capacity.Single)
@@ -161,13 +173,36 @@ namespace Com.Github.Knose1.Flow.Editor
 		protected virtual void SetupPorts()	 { }
 		protected virtual void SetupFields() { }
 
-		protected void RegisterField<T>(BaseField<T> field)
+		protected static void RegisterField<T>(BaseField<T> field)
 		{
 			field.RegisterValueChangedCallback(Field_OnValueChanged);
 		}
-
-		private void Field_OnValueChanged<T>(ChangeEvent<T> evt)
+		protected static void RegisterField(BaseField<string> field, Regex valueCorrector, bool forceCase = false, bool startWithHigherCase = true)
 		{
+			void LCallback(ChangeEvent<string> evt)
+			{
+				string value = valueCorrector.Replace(evt.newValue, "");
+
+				if (forceCase)
+				{
+					if (startWithHigherCase)
+						value = value.ToUpperCamelCase();
+					else
+						value = value.ToLowerCamelCase();
+				}
+
+				(evt.target as BaseField<string>).value = value;
+				
+				if (value == evt.previousValue) return; 
+				Field_OnValueChanged(evt);
+			}
+
+			field.RegisterValueChangedCallback(LCallback);
+		}
+
+		private static void Field_OnValueChanged<T>(ChangeEvent<T> evt)
+		{
+			if (evt.newValue.Equals(evt.previousValue)) return;
 			OnChange?.Invoke();
 		}
 

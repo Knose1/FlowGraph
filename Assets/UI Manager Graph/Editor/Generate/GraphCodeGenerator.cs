@@ -1,4 +1,5 @@
-﻿using Com.Github.Knose1.Flow.Engine.Machine;
+﻿using Com.Github.Knose1.Common;
+using Com.Github.Knose1.Flow.Engine.Machine;
 using Com.Github.Knose1.Flow.Engine.Settings;
 using Com.Github.Knose1.Flow.Engine.Settings.NodeData;
 using System.Collections.Generic;
@@ -210,11 +211,11 @@ namespace Com.Github.Knose1.Flow.Editor.Generate
 			{
 				//Higher CamelCase
 				hStateName = state.name;
-				hStateName = hStateName.Remove(0, 1).Insert(0, hStateName.Substring(0, 1).ToUpper()); // set the 1st character to Upper
+				hStateName = hStateName.ToUpperCamelCase();
 
 				//Lower camelCase
 				lStateName = state.name;
-				lStateName = lStateName.Remove(0, 1).Insert(0, lStateName.Substring(0, 1).ToLower()); //set the 1st character to lower
+				lStateName = lStateName.ToLowerCamelCase();
 
 				@namespace = state.@namespace;
 				@class = state.@class;

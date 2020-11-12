@@ -1,7 +1,56 @@
-GridBackground 
+GridBackground.flowGridBackground
 {
-	--grid-background-color: #282828;
-	--line-color: #424242;
-	--thick-line-color: #424242;
-	--spacing: 100;
+	--grid-background-color: #999999 !important;
+	--line-color: #5C5C5C !important;
+	--thick-line-color: #5C5C5C !important;
+}
+
+TriggerList.TriggerList
+{
+	background-color: #CBCBCB;
+	border-color: #999999;
+}
+
+.FlowGraphNode 
+{
+	border-color: rgba(0,0,0,1);
+}
+
+Label.unity-label.unity-toggle__text 
+{
+	color: black
+}
+
+FlowGraphEdge.edge.FlowGraphEdge
+{
+	--selected-edge-color: #7050C0 !important;
+}
+
+TriggerList.TriggerList > TextElement
+{
+	background-color: #E8E8E8;
+	border-color: #999999;
+	color: black;
+}
+
+TriggerList.TriggerList > .unity-list-view > .unity-label
+{
+	color: black;
+}
+
+TriggerList.TriggerList > .unity-list-view > .unity-list-view__item:checked
+{
+	color:black !important;
+	background-color: #A5A5A5;
+}
+
+TriggerList.TriggerList > .unity-list-view:focus > .unity-list-view__item:checked 
+{
+	color: white;
+	background-color:#3E5F96;
+}
+
+TriggerList.TriggerList > .unity-list-view > .unity-list-view__item:hover
+{
+	background-color: #AEAEAE;
 }

@@ -14,6 +14,7 @@ namespace Com.Github.Knose1.Flow.Editor.Node
 		private TextElement generatedClassTextElement;
 
 		private TextField namespaceField;
+
 		public string Namespace
 		{
 			get => namespaceField.value;
@@ -56,7 +57,7 @@ namespace Com.Github.Knose1.Flow.Editor.Node
 			UIManagerGraphNodeExtend.CorrectLabel(namespaceField.labelElement);
 			namespaceField.style.width = 250;
 			UIManagerGraphNodeExtend.Indent(namespaceField);
-			RegisterField(namespaceField);
+			RegisterField(namespaceField, VarCorrector);
 			AddInspectorElement(namespaceField);
 
 			//Class field
@@ -65,7 +66,7 @@ namespace Com.Github.Knose1.Flow.Editor.Node
 			UIManagerGraphNodeExtend.CorrectLabel(classField.labelElement);
 			classField.style.width = 160;
 			UIManagerGraphNodeExtend.Indent(classField);
-			RegisterField(classField);
+			RegisterField(classField, VarCorrector);
 			AddInspectorElement(classField);
 		}
 

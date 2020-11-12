@@ -1,0 +1,51 @@
+GridBackground.flowGridBackground
+{
+	--spacing: 100 !important;
+}
+
+TriggerList.TriggerList
+{
+	border-right-width: 1px;	
+}
+
+.FlowGraphNode 
+{
+}
+
+FlowGraphEdge.edge.FlowGraphEdge
+{
+}
+
+TriggerList.TriggerList 
+{
+	width: 100px;
+	padding-top: 20px;
+}
+
+TriggerList.TriggerList > TextElement
+{
+	padding-left: 10px;
+	margin-bottom: 10px;
+	height: 20px;
+	font-size: 12px;
+	border-width: 0 0 1px 0;
+	-unity-text-align: middle-left;
+	-unity-font-style: bold;
+}
+
+#selection-border.trigger-border
+{
+	border-radius: 6px;
+	margin: -5px;
+}
+
+#selection-border.trigger-border:focus,
+#selection-border.trigger-border:hover
+{
+	border-width: 0px !important;
+}
+
+#selection-border.trigger-border.show
+{
+	border-width: 5px;
+}

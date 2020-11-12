@@ -31,6 +31,8 @@ namespace Com.Github.Knose1.Flow.Editor
 		private bool isDirty = false;
 		protected ToolbarButton save;
 		private TriggerList listView;
+		private StyleSheet styleSheet;
+		private StyleSheet styleSheetColor;
 
 		[MenuItem("Window/Game/Flow")]
 		static public void Open()
@@ -43,13 +45,17 @@ namespace Com.Github.Knose1.Flow.Editor
 		{
 			OnDisable(); //Just In Case
 
+			string filename = EditorGUIUtility.isProSkin ? FlowGraphAssetDatabase.RESSOURCE_STYLESHEET_BLACK : FlowGraphAssetDatabase.RESSOURCE_STYLESHEET_WHITE;
+			LoadFile(FlowGraphAssetDatabase.RESSOURCE_STYLESHEET, out styleSheet);
+			LoadFile(filename, out styleSheetColor);
+
 			if (manager == null)
 				manager = new FlowGraphManager();
-			
+
 			manager.OnSelectionStatusChange += Manager_OnSelectionStatusChange;
-			
+
 			GenerateGraph();
-			//GenerateTriggerList();
+			GenerateTriggerList();
 			GenerateToolbar();
 
 			manager.OnSaving += Manager_OnSaving;
@@ -58,6 +64,36 @@ namespace Com.Github.Knose1.Flow.Editor
 			rootVisualElement.RegisterCallback<KeyDownEvent>(OnKeyDown);
 		}
 
+		private void LoadFile(string filename, out StyleSheet styleSheet)
+		{
+			styleSheet = null;
+			try
+			{
+				//Load
+				styleSheet = AssetDatabase.LoadAssetAtPath<StyleSheet>(filename);
+			}
+			catch (Exception e)
+			{
+				Debug.LogError(e);
+				Debug.LogWarning("[" + nameof(FlowGraph) + "] error loading the Stylesheet, filename : " + filename);
+				styleSheet = null;
+				return;
+			}
+			
+			try
+			{
+				rootVisualElement.styleSheets.Add(styleSheet);
+			}
+			catch (Exception e)
+			{
+				Debug.LogError(e);
+				Debug.LogWarning("[" + nameof(FlowGraph) + "] error parsing the Stylesheet, filename : " + filename);
+
+				rootVisualElement.styleSheets.Remove(styleSheet);
+				styleSheet = null;
+				return;
+			}
+		}
 
 		private void OnKeyDown(KeyDownEvent evt)
 		{
@@ -208,6 +244,9 @@ namespace Com.Github.Knose1.Flow.Editor
 
 		public void OnDisable()
 		{
+			if (styleSheet) rootVisualElement.styleSheets.Remove(styleSheet);
+			if (styleSheetColor) rootVisualElement.styleSheets.Remove(styleSheetColor);
+
 			if (manager != null) manager.OnSelectionStatusChange -= Manager_OnSelectionStatusChange;
 
 			if (graph != null) rootVisualElement.Remove(graph);

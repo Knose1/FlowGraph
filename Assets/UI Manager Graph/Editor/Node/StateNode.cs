@@ -9,7 +9,7 @@ using UnityEngine.UIElements;
 
 namespace Com.Github.Knose1.Flow.Editor.Node
 {
-	public class StateNode : FlowGraphNode
+	public class StateNode : FlowGraphNode, IDisposable
 	{
 
 		//*/////////////////////////////////////*//
@@ -17,22 +17,35 @@ namespace Com.Github.Knose1.Flow.Editor.Node
 		//              Local Class              //
 		//                                       //
 		//*/////////////////////////////////////*//
-		public class StateOutputPort : VisualElement, IDisposable
+		public class StateOutputPort : GraphElement, IDisposable
 		{
 			private static List<StateOutputPort> _list = new List<StateOutputPort>();
 			public static List<StateOutputPort> List => _list;
+			public static void DisposeAll()
+			{
+				List<StateOutputPort> _list1 = new List<StateOutputPort>(_list);
+				foreach (var item in _list1)
+				{
+					item.Dispose();
+				}
+			}
 
-			public static event Action<List<string>> OnTriggerChange;
+			public delegate void DelegateTriggerChange(List<string> triggers, DelegateTriggerSelected callback);
+			public delegate void DelegateTriggerSelected(string selectedTrigger);
+			public static event DelegateTriggerChange OnTriggerChange;
+			public static event Action OnDataChange;
 
 			public event Action<StateOutputPort> OnDestroy;
 
 			private Port _port;
 			public Port Port => _port;
 
+			private VisualElement rootContainer;
 			private TextField triggerField;
 			private Toggle createThreadField;
 			private VisualElement portContainer;
 			private Button portRemoveButton;
+			private TriggerSelectionBorder triggerSelectionBorder;
 
 			public string Trigger
 			{
@@ -52,7 +65,6 @@ namespace Com.Github.Knose1.Flow.Editor.Node
 				}
 			}
 
-
 			private void SetPortName(string value)
 			{
 				if (value == "")
@@ -63,13 +75,66 @@ namespace Com.Github.Knose1.Flow.Editor.Node
 				_port.portName = value;
 			}
 
+			public class TriggerSelectionBorder : VisualElement
+			{
+				private const string SHOW_CLASS = "show";
+				private const float HEX_MAX_VALUE = 0xFF;
+				
+				private bool m_show;
+				public bool Show 
+				{
+					get => m_show;
+					set
+					{
+						m_show = value;
+						if (!m_show) RemoveFromClassList(SHOW_CLASS);
+						else AddToClassList(SHOW_CLASS);
+					}
+				}
+
+				private static readonly Color defaultColor = new Color(0xFF / HEX_MAX_VALUE, 0x98 / HEX_MAX_VALUE, 0x44 / HEX_MAX_VALUE);
+				private Color m_color = defaultColor;
+				public Color Color 
+				{
+					get => m_color;
+					set
+					{
+						m_color = value;
+
+						style.borderBottomColor =
+						style.borderLeftColor =
+						style.borderRightColor =
+						style.borderTopColor = m_color;
+					}
+				}
+
+				public TriggerSelectionBorder()
+				{
+					Color = m_color;
+					focusable = false;
+					this.pickingMode = PickingMode.Ignore;
+					name = "selection-border";
+					AddToClassList("trigger-border");
+				}
+			}
+
 			/// <summary>
 			/// Constructor
 			/// </summary>
 			/// <param name="port">Port child</param>
-			public StateOutputPort(Port port)
+			public StateOutputPort(Port port) : base()
 			{
+				this.elementTypeColor = new Color(0, 0, 0, 0);
+
 				_list.Add(this);
+
+				rootContainer = new VisualElement();
+				rootContainer.name = nameof(rootContainer);
+				Add(rootContainer);
+
+				
+				triggerSelectionBorder = new TriggerSelectionBorder();
+				Add(triggerSelectionBorder);
 
 				UIManagerGraphNodeExtend.Indent(this);
 				style.marginTop = 10;
@@ -85,22 +150,24 @@ namespace Com.Github.Knose1.Flow.Editor.Node
 				triggerField = new TextField("Trigger");
 				triggerField.style.width = 120;
 				triggerField.RegisterValueChangedCallback(TriggerField_OnValueChanged);
+				RegisterField(triggerField, VarCorrector, true, true);
 				UIManagerGraphNodeExtend.CorrectLabel(triggerField.labelElement);
-				Add(triggerField);
+				rootContainer.Add(triggerField);
 
 				//Create Thread Field
 				createThreadField = new Toggle("Create Thread");
 				createThreadField.style.width = 120;
+				createThreadField.RegisterValueChangedCallback(ThreadField_OnValueChanged);
 				UIManagerGraphNodeExtend.CorrectLabel(createThreadField.labelElement);
 				UIManagerGraphNodeExtend.CorrectToggle(createThreadField);
-				Add(createThreadField);
+				rootContainer.Add(createThreadField);
 
 
 				//Port Container
 				portContainer = new VisualElement();
 				portContainer.style.flexDirection = FlexDirection.Row;
 				portContainer.name = nameof(portContainer);
-				Add(portContainer);
+				rootContainer.Add(portContainer);
 
 				//Remove port button
 				portRemoveButton = new Button(Dispose);
@@ -114,9 +181,16 @@ namespace Com.Github.Knose1.Flow.Editor.Node
 				SetPortName("");
 				portContainer.Add(_port);
 
+				_port.UpdatePresenterPosition();
+				UpdatePresenterPosition();
 
 				//triggerField.style.width = 300;
 				//triggerField.style.height = 200;
+			}
+
+			private void ThreadField_OnValueChanged(ChangeEvent<bool> evt)
+			{
+				OnDataChange?.Invoke();
 			}
 
 			private void TriggerField_OnValueChanged(ChangeEvent<string> evt)
@@ -165,7 +239,32 @@ namespace Com.Github.Knose1.Flow.Editor.Node
 					triggers.Add(trigger);
 				}
 
-				OnTriggerChange?.Invoke(triggers);
+				OnTriggerChange?.Invoke(triggers, TriggerSelecedCallback);
+				OnDataChange?.Invoke();
+			}
+
+			private static void TriggerSelecedCallback(string selectedTrigger)
+			{
+				List<StateOutputPort> _list1 = new List<StateOutputPort>(_list);
+				foreach (var item in _list1)
+				{
+					item.ShowTrigger(item.Trigger == selectedTrigger);
+				}
+			}
+
+			public void SetColor(Color color)
+			{
+				triggerSelectionBorder.Color = color;
+				_port.portColor = color;
+			}
+
+			public void ShowTrigger(bool selected)
+			{
+				/*if (selected)
+					Add(triggerSelectionBorder);
+				else if (triggerSelectionBorder.parent == this)
+					Remove(triggerSelectionBorder);*/
+				triggerSelectionBorder.Show = selected;
 			}
 		}
 
@@ -179,11 +278,11 @@ namespace Com.Github.Knose1.Flow.Editor.Node
 		protected Color INSTANTIATE_COLOR = Color.cyan;
 		protected Color CONSTRUCTOR_COLOR = new Color(0.6f, 1f,0.6f);
 		protected Color EVENT_COLOR = new Color(177/255f, 160/255f, 246/255f);
-		protected Color EMPTY_COLOR = Color.white / 3;
+		protected Color EMPTY_COLOR = Color.white * 4 / 5;
 
 		//*/////////////////////////////////////*//
 		//                                       //
-		//                 Field                 //
+		//             Output Ports              //
 		//                                       //
 		//*/////////////////////////////////////*//
 		private List<StateOutputPort> stateOutputPorts = new List<StateOutputPort>();
@@ -281,7 +380,7 @@ namespace Com.Github.Knose1.Flow.Editor.Node
 			UIManagerGraphNodeExtend.CorrectLabel(nameField.labelElement); //Correct the label style of the field
 			nameField.style.width = 125; //Set its width
 			nameField.RegisterValueChangedCallback(OnNameFieldChange); //Register onValueChanged
-			RegisterField(nameField);
+			RegisterField(nameField, VarCorrector, true, true);
 			AddInspectorElement(nameField); //Add to inspector
 
 			//Creation Mode field
@@ -298,7 +397,7 @@ namespace Com.Github.Knose1.Flow.Editor.Node
 			UIManagerGraphNodeExtend.CorrectLabel(namespaceField.labelElement);
 			UIManagerGraphNodeExtend.Indent(namespaceField, 1);
 			namespaceField.style.width = 250;
-			RegisterField(namespaceField);
+			RegisterField(namespaceField, VarCorrector);
 
 			//Class field
 			classField = new TextField("Class");
@@ -306,7 +405,7 @@ namespace Com.Github.Knose1.Flow.Editor.Node
 			UIManagerGraphNodeExtend.CorrectLabel(classField.labelElement);
 			UIManagerGraphNodeExtend.Indent(classField, 1);
 			classField.style.width = 160;
-			RegisterField(classField);
+			RegisterField(classField, VarCorrector);
 
 			//Prefab field
 			//prefabField = new ObjectField("Prefab");
@@ -342,7 +441,9 @@ namespace Com.Github.Knose1.Flow.Editor.Node
 		protected void AddStateOutputPort() => AddStateOutputPort(null);
 		protected void AddStateOutputPort(StateNodeData.StateNodePort data, bool autoRefresh = true)
 		{
-			StateOutputPort output = new StateOutputPort(GeneratePort(Direction.Output, Port.Capacity.Multi));
+			StateOutputPort output = new StateOutputPort(GeneratePort(Direction.Output, Port.Capacity.Single));
+			output.SetColor(GetNodeColor());
+
 			AddOutputElement(output);
 			output.OnDestroy += StateOutput_OnDestroy;
 			stateOutputPorts.Add(output);
@@ -451,9 +552,11 @@ namespace Com.Github.Knose1.Flow.Editor.Node
 			toReturn.Namespace = data.@namespace;
 			toReturn.Class = data.@class;
 			toReturn.GenerateEvent = data.generateEvent;
-			toReturn.OnCreationModeFieldChange();
 
 			toReturn.GeneratePortsFromData(data.ports);
+			
+			toReturn.OnCreationModeFieldChange();
+
 
 			toReturn.RefreshExpandedState();
 			toReturn.RefreshPorts();
@@ -497,6 +600,23 @@ namespace Com.Github.Knose1.Flow.Editor.Node
 		private void UpdateEventText()
 		{
 			eventTextElement.text = "Event : "+StateNodeData.GetEventName(StateName);
+		}
+
+		protected override void SetNodeColor(Color color)
+		{
+			base.SetNodeColor(color);
+			foreach (StateOutputPort item in stateOutputPorts)
+			{
+				item.SetColor(color);
+			}
+		}
+
+		public void Dispose()
+		{
+			foreach (var item in stateOutputPorts)
+			{
+				item.Dispose();
+			}
 		}
 	}
 }

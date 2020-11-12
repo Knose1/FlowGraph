@@ -60,7 +60,20 @@ namespace Com.Github.Knose1.Flow.Editor
 		/// </summary>
 		public void CreateAsset()
 		{
-			throw new NotImplementedException();
+			string path = EditorUtility.SaveFilePanel(
+				title:"Create Asset", "", nameof(FlowGraphScriptable), "asset"
+			);
+			string assetPath = "Assets"+path.Replace(Application.dataPath, "");
+
+			FlowGraphScriptable asset = ScriptableObject.CreateInstance<FlowGraphScriptable>();
+			AssetDatabase.CreateAsset(asset, assetPath);
+
+			EditorGUIUtility.PingObject(asset);
+			Selection.activeObject = asset;
+			_target = asset;
+
+			OnSelectionStatusChange?.Invoke(Status.NoProblem);
+			OnDataChange?.Invoke();
 		}
 
 		public void GenerateCode()

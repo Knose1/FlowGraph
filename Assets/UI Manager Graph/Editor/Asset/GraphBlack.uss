@@ -1,7 +1,22 @@
-GridBackground 
+GridBackground.flowGridBackground
 {
-	--grid-background-color: #282828;
-	--line-color: #424242;
-	--thick-line-color: #424242;
-	--spacing: 100;
+	--grid-background-color: #282828 !important;
+	--line-color: #424242 !important;
+	--thick-line-color: #424242 !important;
+}
+
+TriggerList.TriggerList
+{
+	background-color: #383838;
+	border-color: #232323;
+}
+
+.FlowGraphNode 
+{
+}
+
+TriggerList.TriggerList > TextElement
+{
+	background-color: #505050;
+	border-color: #232323;
 }

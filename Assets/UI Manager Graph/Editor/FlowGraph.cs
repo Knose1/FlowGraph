@@ -19,6 +19,14 @@ namespace Com.Github.Knose1.Flow.Editor
 		/// The stylesheet name
 		/// </summary>
 		public const string RESSOURCE_STYLESHEET = ASSET_FOLDER+"Graph.uss";
+		/// <summary>
+		/// The stylesheet black name
+		/// </summary>
+		public const string RESSOURCE_STYLESHEET_BLACK = ASSET_FOLDER+"GraphBlack.uss";
+		/// <summary>
+		/// The stylesheet white name
+		/// </summary>
+		public const string RESSOURCE_STYLESHEET_WHITE = ASSET_FOLDER+"GraphWhite.uss";
 
 		/// <summary>
 		/// Arguments : <br/> 
@@ -111,11 +119,20 @@ namespace Com.Github.Knose1.Flow.Editor
 		/*                                      */
 		/*//////////////////////////////////////*/
 
-
 		protected EntryNode entryNode = null;
 		protected FlowGraphManager manager;
 		private MiniMap miniMap;
-		private StyleSheet styleSheet;
+
+		/// <summary>
+		/// To know when the graph is copyPasting datas
+		/// </summary>
+		public bool isUnserializing;
+		/// <summary>
+		/// To know when the graph is initing a graph
+		/// </summary>
+		public bool isInit;
+		
+		public const string GRID_BACKGROUND_CLASS_NAME = "flowGridBackground";
 
 
 		/*//////////////////////////////////////*/
@@ -123,7 +140,6 @@ namespace Com.Github.Knose1.Flow.Editor
 		/*             Constructor              */
 		/*                                      */
 		/*//////////////////////////////////////*/
-
 
 		public FlowGraph(FlowGraphManager manager) : base()
 		{
@@ -133,10 +149,120 @@ namespace Com.Github.Knose1.Flow.Editor
 			this.manager = manager;
 			manager.OnDataChange += Manager_OnDataChange;
 
+			StateNode.StateOutputPort.OnDataChange += OnElementChange;
 			FlowGraphNode.OnChange += OnElementChange;
 			FlowGraphEdge.OnChange += OnElementChange;
+			FlowGraphEdge.OnAddReroute += FlowGraphEdge_OnAddReroute;
+			FlowGraphPort.OnConnection += FlowGraphPort_OnConnection;
+			RerouteNode.OnChange += OnElementChange;
 		}
 
+
+		public override void BuildContextualMenu(ContextualMenuPopulateEvent evt)
+		{
+			base.BuildContextualMenu(evt);
+
+			bool onlyRerouteSelected = true;
+			bool inAndOutIsSame = true;
+
+			List<ISelectable> selection = this.selection;
+			List<RerouteNode> rerouteNodes = new List<RerouteNode>();
+
+			//Scope to kill temp in and out port
+			{
+				Port inPort = null;
+				Port outPort = null;
+				foreach (var item in selection)
+				{
+					if (item is UnityEditor.Experimental.GraphView.Node)
+					{
+						bool isReroute = item is RerouteNode;
+						//onlyRerouteSelected switch to false when the node is not a RerouteNode
+						onlyRerouteSelected = isReroute && onlyRerouteSelected; //onlyRerouteSelected == true
+					
+
+
+						if (isReroute)
+						{
+							RerouteNode reroute = item as RerouteNode;
+							rerouteNodes.Add(reroute);
+
+							RerouteNode.GetReroute(reroute, out _, out _, out Port rerouteInPort, out Port rerouteOutPort);
+
+							inPort = inPort ?? rerouteInPort;
+							outPort = outPort ?? rerouteOutPort;
+
+							inAndOutIsSame = inPort == rerouteInPort && outPort == rerouteOutPort;
+						}
+
+						if (!onlyRerouteSelected || !inAndOutIsSame) break;
+					}
+				}
+			}
+
+			if (inAndOutIsSame) inAndOutIsSame = RerouteNode.AreConsecutives(rerouteNodes);
+
+			int nodesCount = rerouteNodes.Count;
+			if (onlyRerouteSelected && inAndOutIsSame && nodesCount > 0)
+			{
+				if (nodesCount == 1)
+				{
+					evt.menu.AppendAction("Remove Reroute", LMenuRemoveReroute);
+				}
+				else
+				{
+
+					evt.menu.AppendAction("Remove Reroutes", LMenuRemoveReroute);
+					//evt.menu.AppendAction("Colapse Reroutes", LMenuColapseReroute);
+				}
+			}
+
+			void LMenuRemoveReroute(DropdownMenuAction obj)
+			{
+				this.selection = new List<ISelectable>(rerouteNodes);
+
+				RerouteNode reroute = rerouteNodes.First();
+				RerouteNode.GetReroute(reroute, out _, out _, out Port inPort, out Port outPort, rerouteNodes);
+
+				foreach (var rerouteItem in rerouteNodes)
+				{
+					RemoveNode(rerouteItem);
+				}
+				
+				AddElement(inPort.ConnectTo<FlowGraphEdge>(outPort));
+				UpdateReroute();
+			}
+
+			/*void LMenuColapseReroute(DropdownMenuAction obj)
+			{
+				rerouteNodes.GetCenter();
+
+			}*/
+		}
+
+
+		private void FlowGraphPort_OnConnection(FlowGraphPort inPort, FlowGraphPort outPort)
+		{
+			if (inPort != null && outPort != null && inPort.node is RerouteNode)
+			{
+				(inPort.node as RerouteNode).Color = outPort.portColor;
+			}
+
+			OnElementChange();
+		}
+
+		private void FlowGraphEdge_OnAddReroute(Vector2 arg1, Edge arg2)
+		{
+			RerouteNode reroute = CreateRetoute();
+
+			RerouteNode.AddReroute(arg2, reroute, this);
+
+			Rect pos = reroute.GetPosition();
+			pos.position = contentViewContainer.WorldToLocal(arg1);
+			reroute.SetPosition(pos);
+
+			reroute.UpdateColors();
+		}
 
 		/*//////////////////////////////////////*/
 		/*                                      */
@@ -144,14 +270,11 @@ namespace Com.Github.Knose1.Flow.Editor
 		/*                                      */
 		/*//////////////////////////////////////*/
 
-
-		public TokenNode CreateRetoute()
+		public RerouteNode CreateRetoute()
 		{
-			TokenNode node = new TokenNode(
-				Port.Create<Edge>(Orientation.Horizontal, Direction.Input, Port.Capacity.Single, null),
-				Port.Create<Edge>(Orientation.Horizontal, Direction.Output, Port.Capacity.Single, null)
-			);
+			RerouteNode node = new RerouteNode();
 			AddNode(node);
+			node.UpdateColors();
 
 			return node;
 		}
@@ -190,7 +313,6 @@ namespace Com.Github.Knose1.Flow.Editor
 				node.SetPosition(pos); 
 			}
 			AddElement(node);
-
 			return node;
 		}
 
@@ -200,6 +322,13 @@ namespace Com.Github.Knose1.Flow.Editor
 		/// <returns></returns>
 		public void RemoveNode(UnityEditor.Experimental.GraphView.Node node)
 		{
+			DeleteElements(node.GetConnections());
+
+			if (node is IDisposable)
+			{
+				(node as IDisposable).Dispose();
+			}
+
 			RemoveElement(node);
 		}
 
@@ -264,7 +393,7 @@ namespace Com.Github.Knose1.Flow.Editor
 				{
 					nodeData = (graphNode as FlowGraphNode).Serialize();
 				}
-				else if (graphNode is TokenNode)
+				else if (graphNode is RerouteNode)
 				{
 					nodeData = new RerouteData(graphNode.GetPosition().position);
 				}
@@ -429,6 +558,8 @@ namespace Com.Github.Knose1.Flow.Editor
 				selectables.Add(edge);
 			}
 
+			UpdateReroute();
+
 			return selectables;
 		}
 
@@ -443,9 +574,13 @@ namespace Com.Github.Knose1.Flow.Editor
 		/// </summary>
 		private void Manager_OnDataChange()
 		{
+			isInit = true;
+			isUnserializing = true;
+
 			//Remove old data
 			entryNode = null;
 			DestroyGraphVisual();
+			StateNode.StateOutputPort.DisposeAll();
 
 			//If there is no target, there is no graph to load
 			if (!manager.Target) return;
@@ -469,11 +604,28 @@ namespace Com.Github.Knose1.Flow.Editor
 				Debug.LogError(err);
 				Debug.LogWarning("[" + nameof(FlowGraph) + "] An error occured when Generating the graph");
 			}
+
+			isUnserializing = false;
+			isInit = false;
 		}
 
 		private void OnElementChange()
 		{
-			OnChange?.Invoke();
+			if (!isInit)
+				OnChange?.Invoke();
+	
+			UpdateReroute();
+		}
+
+		private void UpdateReroute()
+		{
+			List<UnityEditor.Experimental.GraphView.Node> nodes = this.nodes.ToList();
+			foreach (var item in nodes)
+			{
+				(item as RerouteNode)?.UpdateColors();
+			}
+
+
 		}
 
 
@@ -503,29 +655,6 @@ namespace Com.Github.Knose1.Flow.Editor
 		/// </summary>
 		private void SetupGraph()
 		{
-			try
-			{
-				//Load
-				styleSheet = AssetDatabase.LoadAssetAtPath<StyleSheet>(FlowGraphAssetDatabase.RESSOURCE_STYLESHEET);
-			}
-			catch (Exception e)
-			{
-				Debug.LogError(e);
-				Debug.LogWarning("[" + nameof(FlowGraph) + "] error loading the Stylesheet, filename : " + FlowGraphAssetDatabase.RESSOURCE_STYLESHEET);
-			}
-
-			try
-			{
-				if (styleSheet != null) styleSheets.Add(styleSheet);
-			}
-			catch (Exception e)
-			{
-				Debug.LogError(e);
-				Debug.LogWarning("[" + nameof(FlowGraph) + "] error parsing the Stylesheet, filename : " + FlowGraphAssetDatabase.RESSOURCE_STYLESHEET);
-
-				styleSheets.Remove(styleSheet);
-			}
-
 			SetupZoom(ContentZoomer.DefaultMinScale, ContentZoomer.DefaultMaxScale);
 
 			this.AddManipulator(new ContentDragger());
@@ -533,16 +662,19 @@ namespace Com.Github.Knose1.Flow.Editor
 			this.AddManipulator(new RectangleSelector());
 
 			GridBackground gridBackground = new GridBackground();
+			gridBackground.AddToClassList(GRID_BACKGROUND_CLASS_NAME);
 			Insert(0, gridBackground);
 			gridBackground.StretchToParentSize();
-
+			
 			serializeGraphElements -= SerializeGraphElements;
 			unserializeAndPaste -= UnserializeAndPasteOperation;
+			deleteSelection -= DeleteSelectionOperation;
 
 			serializeGraphElements += SerializeGraphElementsAsNodeDataList;
 			unserializeAndPaste += UnserializeAndPasteNodeDataList;
+			deleteSelection += DeleteSelectionNodeDataList;
 		}
-		
+
 		/// <summary>
 		/// Util function when generating New Graph
 		/// </summary>
@@ -610,6 +742,8 @@ namespace Com.Github.Knose1.Flow.Editor
 		/// <returns></returns>
 		protected void UnserializeAndPasteNodeDataList(string operationName, string data)
 		{
+			isUnserializing = true;
+
 			List<ISelectable> selection = this.selection.ToList();
 			foreach (ISelectable selectionItem in selection)
 			{
@@ -622,6 +756,24 @@ namespace Com.Github.Knose1.Flow.Editor
 			{
 				selectionItem.Select(this, true);
 			}
+
+			isUnserializing = false;
+		}
+
+		private void DeleteSelectionNodeDataList(string operationName, AskUser askUser)
+		{
+			List<ISelectable> selection1 = new List<ISelectable>(selection);
+			foreach (var item in selection1)
+			{
+				if (item is UnityEditor.Experimental.GraphView.Node)
+				{
+					RemoveNode(item as UnityEditor.Experimental.GraphView.Node);
+				}
+
+				if (item is GraphElement) RemoveElement(item as GraphElement);
+			}
+
+			OnElementChange();
 		}
 
 		/*//////////////////////////////////////*/
@@ -641,26 +793,52 @@ namespace Com.Github.Knose1.Flow.Editor
 			List<Port> compatiblePorts = new List<Port>();
 			List<Port> ports = base.ports.ToList();
 
+			var startNode = startPort.node;
+
 			foreach (Port port in ports)
 			{
+				if (port.direction == startPort.direction) continue;
+				if (port == startPort) continue;
+
 				List<Edge> connections = port.connections.ToList();
 
 				bool isAlreadyConnected = false;
-				for (int i = connections.Count - 1; i >= 0; i--)
+				
+
+				bool isReroute = startNode is RerouteNode;
+				bool isSamePort = startPort != port;
+
+				bool isSameNode = startNode == port.node && isReroute;
+
+				if (isSamePort && !isSameNode && !isAlreadyConnected)
+					compatiblePorts.Add(port);
+			}
+
+			Edge[] startPortEdges = startPort.connections.ToArray();
+			for (int i = startPortEdges.Length - 1; i >= 0; i--)
+			{
+				Port otherPort = null;
+				switch (startPort.direction)
 				{
-					Port other = null;
-
-
-					if (other == port)
-					{
-						isAlreadyConnected = true;
+					case Direction.Input:
+						otherPort = startPortEdges[i].output;
 						break;
-					}
+					case Direction.Output:
+						otherPort = startPortEdges[i].input;
+						break;
 				}
 
+				if (otherPort == null) continue;
 
-				if (startPort != port && startPort.node != port.node && !isAlreadyConnected)
-					compatiblePorts.Add(port);
+				UnityEditor.Experimental.GraphView.Node otherNode = otherPort.node;
+
+				if (otherNode is RerouteNode)
+				{
+					RerouteNode.GetReroute(otherNode as RerouteNode, out FlowGraphNode inNode, out FlowGraphNode outNode, out Port inPort, out Port outPort);
+					
+					compatiblePorts.Remove(inPort);
+					compatiblePorts.Remove(outPort);
+				}
 			}
 
 			return compatiblePorts;
@@ -677,10 +855,14 @@ namespace Com.Github.Knose1.Flow.Editor
 		/// </summary>
 		public void Dispose()
 		{
-			styleSheets.Remove(styleSheet);
 			manager.OnDataChange -= Manager_OnDataChange;
+
 			FlowGraphNode.OnChange -= OnElementChange;
 			FlowGraphEdge.OnChange -= OnElementChange;
+			FlowGraphEdge.OnAddReroute -= FlowGraphEdge_OnAddReroute;
+			FlowGraphPort.OnConnection -= FlowGraphPort_OnConnection;
+			RerouteNode.OnChange -= OnElementChange;
+
 			OnChange = null;
 		}
 	}
@@ -759,7 +941,7 @@ namespace Com.Github.Knose1.Flow.Editor
 		/// </summary>
 		/// <param name="node">This</param>
 		/// <returns></returns>
-		public static List<Port> GetPorts(this UnityEditor.Experimental.GraphView.Node node) 
+		public static List<Port> GetPorts(this UnityEditor.Experimental.GraphView.Node node)
 		{
 			if (node is FlowGraphNode) return (node as FlowGraphNode).Ports;
 
@@ -779,6 +961,85 @@ namespace Com.Github.Knose1.Flow.Editor
 			}
 
 			return ports;
+		}
+
+		public static List<Edge> GetConnections(this UnityEditor.Experimental.GraphView.Node node)
+		{
+			List<Edge> toReturn = new List<Edge>();
+			List<Port> ports = node.GetPorts();
+
+			foreach (var port in ports)
+			{
+				toReturn.AddRange(port.connections);
+			}
+
+			return toReturn;
+		}
+
+		public static T GetFirstChildOfType<T>(this VisualElement elm) where T : VisualElement {
+			IEnumerable<VisualElement> enumerable = elm.Children();
+			IEnumerator<VisualElement> enumerator = enumerable.GetEnumerator();
+
+			int length = enumerable.Count();
+			if (length == 0) return null;
+
+			while (enumerator.MoveNext())
+			{
+				if (enumerator.Current is T)
+					return (T)enumerator.Current;
+			}
+
+			enumerator = enumerable.GetEnumerator();
+			while (enumerator.MoveNext())
+			{
+				T child = enumerator.Current.GetFirstChildOfType<T>();
+				if (child != null) 
+					return child;
+			}
+
+			return null;
+		}
+
+		public static Vector2 GetCenter(this IEnumerable<VisualElement> selection)
+		{
+			bool isToRturnSet = false;
+			Vector2 toReturn = default;
+			foreach (VisualElement item in selection)
+			{
+				Vector2 pos = item.worldBound.center;
+
+				if (!isToRturnSet)
+				{
+					toReturn = pos;
+					isToRturnSet = true;
+					continue;
+				}
+
+				toReturn = (toReturn + pos) / 2;
+			}
+
+			return toReturn;
+		}
+
+		public static Vector2 GetCenter(this IEnumerable<UnityEditor.Experimental.GraphView.Node> selection)
+		{
+			bool isToRturnSet = false;
+			Vector2 toReturn = default;
+			foreach (var item in selection)
+			{
+				Vector2 pos = item.GetPosition().center;
+
+				if (!isToRturnSet)
+				{
+					toReturn = pos;
+					isToRturnSet = true;
+					continue;
+				}
+
+				toReturn = (toReturn + pos) / 2;
+			}
+
+			return toReturn;
 		}
 	}
 }
