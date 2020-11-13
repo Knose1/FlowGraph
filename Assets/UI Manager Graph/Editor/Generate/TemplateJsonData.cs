@@ -6,6 +6,7 @@
 		public string EVENTS;
 		public string GO_FIELDS;
 		public string CLASS_FIELDS;
+		public string SUBSTATE_FIELDS;
 		public string STATES;
 		public string CREATE_STATES;
 	}
@@ -17,6 +18,7 @@
 		public GeneratePosition EventState;
 		public GeneratePosition GoState;
 		public GeneratePosition ClassMachineState;
+		public GeneratePosition SubstateMachine;
 		public string ALLOW_TRIGGERS;
 		public string ADD_TRIGGERS;
 		public string ADD_EVENTS;

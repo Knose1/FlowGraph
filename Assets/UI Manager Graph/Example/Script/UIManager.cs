@@ -9,7 +9,7 @@ using Com.Github.Knose1.Flow.Engine.Machine.State;
 namespace Com.Github.Knose1.Flow.Example
 {
 	/// <summary>
-	/// GENERATED CLASS
+	/// GENERATED CLASS (intended result)
 	/// </summary>
 	public class UIManager : StateMachine
 	{
@@ -20,9 +20,13 @@ namespace Com.Github.Knose1.Flow.Example
 		
 		protected Com.Github.Knose1.Flow.Example.Menu menu = new Com.Github.Knose1.Flow.Example.Menu();
 
+		protected TestMachine testSubMachine;
+
 		protected GameObjectMachineState titlecardState;
 		protected ClassMachineState menuState;
 		protected MachineState startGameState;
+		
+		protected SubstateMachine testSubstate;
 
 		protected override void SetupMachine()
 		{
@@ -31,6 +35,7 @@ namespace Com.Github.Knose1.Flow.Example
 			titlecardState = new GameObjectMachineState("Titlecard",titlecard);
 			menuState = new ClassMachineState("Menu", menu);
 			startGameState = new MachineState("StartGame");
+			testSubstate = new SubstateMachine("Test", testSubMachine = new TestMachine(this));
 
 			AllowTrigger("CountDown");
 			AllowTrigger("StartGame");
@@ -46,6 +51,13 @@ namespace Com.Github.Knose1.Flow.Example
 		protected override void EntryPoint(Thread mainThread)
 		{
 			mainThread.SetState(titlecardState);
+		}
+
+		public class TestMachine : Machine
+		{
+			public TestMachine(StateMachine stateMachine) : base(stateMachine){}
+
+			protected override void EntryPoint(Thread mainThread) => throw new NotImplementedException();
 		}
 	}
 }

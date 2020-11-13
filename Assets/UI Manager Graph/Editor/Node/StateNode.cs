@@ -1,4 +1,5 @@
-﻿using Com.Github.Knose1.Flow.Engine.Settings.NodeData;
+﻿using Com.Github.Knose1.Flow.Engine.Settings;
+using Com.Github.Knose1.Flow.Engine.Settings.NodeData;
 using System;
 using System.Collections.Generic;
 using UnityEditor;
@@ -281,6 +282,22 @@ namespace Com.Github.Knose1.Flow.Editor.Node
 		protected Color CONSTRUCTOR_COLOR = new Color(0.6f, 1f,0.6f);
 		protected Color EVENT_COLOR = new Color(177/255f, 160/255f, 246/255f);
 		protected Color EMPTY_COLOR = Color.white * 4 / 5;
+		protected Color SUBSTATE_COLOR = new Color(0, 160/255f, 246/255f);
+
+		//*/////////////////////////////////////*//
+		//                                       //
+		//                Events                 //
+		//                                       //
+		//*/////////////////////////////////////*//
+
+		/// <summary>
+		/// Return true if the scriptable is allowed
+		/// </summary>
+		/// <param name="newScriptable"></param>
+		/// <param name="targetScriptable">The current graph</param>
+		/// <returns></returns>
+		public delegate bool DelegateSubstateChange(FlowGraphScriptable newScriptable);
+		public static event DelegateSubstateChange OnSubstateChange;
 
 		//*/////////////////////////////////////*//
 		//                                       //
@@ -343,6 +360,13 @@ namespace Com.Github.Knose1.Flow.Editor.Node
 		{
 			get => generateEventField.value;
 			set => generateEventField.value = value;
+		}
+
+		private ObjectField flowGraphScriptableField;
+		public FlowGraphScriptable SubState
+		{
+			get => flowGraphScriptableField.value as FlowGraphScriptable;
+			protected set => flowGraphScriptableField.value = value;
 		}
 
 
@@ -409,6 +433,17 @@ namespace Com.Github.Knose1.Flow.Editor.Node
 			classField.style.width = 160;
 			RegisterField(classField, VarCorrector);
 
+			//Substate Field
+			flowGraphScriptableField = new ObjectField("Graph");
+			flowGraphScriptableField.allowSceneObjects = false;
+			flowGraphScriptableField.objectType = typeof(FlowGraphScriptable);
+			flowGraphScriptableField.tooltip = "The subgraph";
+			UIManagerGraphNodeExtend.CorrectLabel(flowGraphScriptableField.labelElement);
+			flowGraphScriptableField.style.width = 180;
+			flowGraphScriptableField.RegisterValueChangedCallback(OnFlowGraphScriptableFieldChange);
+			UIManagerGraphNodeExtend.Indent(flowGraphScriptableField, 1);
+
+
 			//Prefab field
 			//prefabField = new ObjectField("Prefab");
 			//prefabField.tooltip = "The prefab object to create";
@@ -439,7 +474,6 @@ namespace Com.Github.Knose1.Flow.Editor.Node
 			
 			OnCreationModeFieldChange();
 		}
-
 		protected void AddStateOutputPort() => AddStateOutputPort(null);
 		protected void AddStateOutputPort(StateNodeData.StateNodePort data, bool autoRefresh = true)
 		{
@@ -485,6 +519,7 @@ namespace Com.Github.Knose1.Flow.Editor.Node
 			RemoveInspectorElement(namespaceField);
 			RemoveInspectorElement(classField);
 			//RemoveInspectorElement(prefabField);
+			RemoveInspectorElement(flowGraphScriptableField);
 			RemoveInspectorElement(eventTextElement);
 			RemoveInspectorElement(generateEventField);
 
@@ -517,7 +552,10 @@ namespace Com.Github.Knose1.Flow.Editor.Node
 				case StateNodeData.Execution.Empty:
 					SetNodeColor(EMPTY_COLOR);
 					return;
-
+				case StateNodeData.Execution.SubState:
+					AddInspectorElement(flowGraphScriptableField);
+					SetNodeColor(SUBSTATE_COLOR);
+					return;
 				default: 
 					return;
 			}
@@ -534,6 +572,22 @@ namespace Com.Github.Knose1.Flow.Editor.Node
 			else
 				RemoveInspectorElement(eventTextElement);
 		}
+		
+		private void OnFlowGraphScriptableFieldChange(ChangeEvent<UnityEngine.Object> evt)
+		{
+			FlowGraphScriptable previousScriptable = evt.previousValue as FlowGraphScriptable;
+			FlowGraphScriptable newScriptable = evt.newValue as FlowGraphScriptable;
+			if (OnSubstateChange.Invoke(newScriptable))
+			{
+				flowGraphScriptableField.SetValueWithoutNotify(newScriptable);
+				CallOnChange();
+			}
+			else 
+				flowGraphScriptableField.SetValueWithoutNotify(previousScriptable);
+
+
+		}
+
 
 
 		//*/////////////////////////////////////*//
@@ -543,7 +597,7 @@ namespace Com.Github.Knose1.Flow.Editor.Node
 		//*/////////////////////////////////////*//
 		public override NodeData Serialize()
 		{
-			return new StateNodeData(GetPosition().position, StateName, ExecutionMode, Namespace, Class, GenerateEvent, GetPortsData());
+			return new StateNodeData(GetPosition().position, StateName, ExecutionMode, Namespace, Class, GenerateEvent, GetPortsData(), SubState);
 		}
 
 		public static StateNode FromData(StateNodeData data)
@@ -554,6 +608,7 @@ namespace Com.Github.Knose1.Flow.Editor.Node
 			toReturn.Namespace = data.@namespace;
 			toReturn.Class = data.@class;
 			toReturn.GenerateEvent = data.generateEvent;
+			toReturn.SubState = data.subState;
 
 			toReturn.GeneratePortsFromData(data.ports);
 			
@@ -619,6 +674,8 @@ namespace Com.Github.Knose1.Flow.Editor.Node
 			{
 				item.Dispose();
 			}
+
+			SubState = null;
 		}
 	}
 }

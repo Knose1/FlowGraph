@@ -107,8 +107,9 @@ namespace Com.Github.Knose1.Flow.Editor
 			}
 
 			string classTemplate = AssetDatabase.LoadAssetAtPath<TextAsset>(FlowGraphAssetDatabase.CLASS_TEMPLATE).text;
+			string substateClassTemplate = AssetDatabase.LoadAssetAtPath<TextAsset>(FlowGraphAssetDatabase.SUBSTATE_CLASS_TEMPLATE).text;
 			string argsTemplate = AssetDatabase.LoadAssetAtPath<TextAsset>(FlowGraphAssetDatabase.ARGS_TEMPLATE).text;
-			string code = GraphCodeGenerator.Generate(classTemplate, JsonUtility.FromJson<TemplateJsonData>(argsTemplate), _target.nodes);
+			string code = GraphCodeGenerator.Generate(classTemplate, substateClassTemplate, JsonUtility.FromJson<TemplateJsonData>(argsTemplate), _target.nodes);
 
 			if (File.Exists(path))
 			{

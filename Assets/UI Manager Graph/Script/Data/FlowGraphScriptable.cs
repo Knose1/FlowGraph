@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Text.RegularExpressions;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Com.Github.Knose1.Flow.Engine.Settings
 {
@@ -33,10 +34,11 @@ namespace Com.Github.Knose1.Flow.Engine.Settings
 		public const string DEBUG_PREFIX = "["+nameof(NodeDataList)+"]";
 		private const string CHECK_NAME_REGEX = "(^\\d|\\n| |\\W)";
 
-		public EntryNodeData entryNode;
-		public List<ExitNodeData> exitNode;
-		public List<StateNodeData> stateNodes;
-		public List<RerouteData> reroute;
+		[SerializeField] public EntryNodeData entryNode;
+		[SerializeField] public List<ExitNodeData> exitNode;
+		[SerializeField] public List<StateNodeData> stateNodes;
+		[SerializeField, FormerlySerializedAs("reroute")] public List<RerouteData> reroutes;
+		[SerializeField] public List<FlowGraphScriptable> subStates;
 		/* Condition Nodes are deprecated */
 		[NonSerialized] public List<ConditionNodeData> conditionNodes;
 
@@ -53,13 +55,13 @@ namespace Com.Github.Knose1.Flow.Engine.Settings
 			ClearAllDatas();
 		}
 
-		public NodeDataList(EntryNodeData entryNode, List<ExitNodeData> exitNode, List<StateNodeData> stateNodes, List<ConditionNodeData> conditionNodes, List<RerouteData> reroute, List<ConnectorData> connections)
+		public NodeDataList(EntryNodeData entryNode, List<ExitNodeData> exitNode, List<StateNodeData> stateNodes, List<ConditionNodeData> conditionNodes, List<RerouteData> reroutes, List<ConnectorData> connections)
 		{
 			this.entryNode = entryNode;
 			this.exitNode = exitNode;
 			this.stateNodes = stateNodes;
 			this.conditionNodes = conditionNodes;
-			this.reroute = reroute;
+			this.reroutes = reroutes;
 
 			this.connections = connections;
 		}
@@ -151,7 +153,7 @@ namespace Com.Github.Knose1.Flow.Engine.Settings
 			exitNode = new List<ExitNodeData>();
 			stateNodes = new List<StateNodeData>();
 			conditionNodes = new List<ConditionNodeData>();
-			reroute = new List<RerouteData>();
+			reroutes = new List<RerouteData>();
 
 			connections = new List<ConnectorData>();
 		}
@@ -230,9 +232,9 @@ namespace Com.Github.Knose1.Flow.Engine.Settings
 				nodes.Add(new NodeAndIndex(i, conditionNodes[i].GetType(), conditionNodes[i].position));
 			}
 
-			for (int i = 0; i < reroute.Count; i++)
+			for (int i = 0; i < reroutes.Count; i++)
 			{
-				nodes.Add(new NodeAndIndex(i, reroute[i].GetType(), reroute[i].position));
+				nodes.Add(new NodeAndIndex(i, reroutes[i].GetType(), reroutes[i].position));
 			}
 		}
 
@@ -255,7 +257,7 @@ namespace Com.Github.Knose1.Flow.Engine.Settings
 			nodes.AddRange(exitNode);
 			nodes.AddRange(stateNodes);
 			nodes.AddRange(conditionNodes);
-			nodes.AddRange(reroute);
+			nodes.AddRange(reroutes);
 
 			lastNodes = nodes = nodes.FindAll((NodeData.NodeData d) => { return d != null && d.IsNotNull; });
 
@@ -281,7 +283,7 @@ namespace Com.Github.Knose1.Flow.Engine.Settings
 				conditionNodes.Add(nodeData as ConditionNodeData);
 
 			else if (nodeData is RerouteData)
-				reroute.Add(nodeData as RerouteData);
+				reroutes.Add(nodeData as RerouteData);
 
 			isDataAdded = true;
 		}
@@ -305,7 +307,7 @@ namespace Com.Github.Knose1.Flow.Engine.Settings
 				conditionNodes.Insert(0, nodeData as ConditionNodeData);
 
 			else if (nodeData is RerouteData)
-				reroute.Insert(0, nodeData as RerouteData);
+				reroutes.Insert(0, nodeData as RerouteData);
 		}
 
 		/// <summary>
@@ -344,7 +346,6 @@ namespace Com.Github.Knose1.Flow.Engine.Settings
 
 			return new ConnectorData(new ConnectedPortData(nodes.IndexOf(input), inputPortId), new ConnectedPortData(nodes.IndexOf(output), outputPortId));
 		}
-
 	}
 
 	[CreateAssetMenu(
@@ -354,6 +355,29 @@ namespace Com.Github.Knose1.Flow.Engine.Settings
 	)]
 	public class FlowGraphScriptable : ScriptableObject
 	{
+		public List<FlowGraphScriptable> ParentHierachyToList()
+		{
+			//1 list = 1 hierachy
+			List<FlowGraphScriptable> lasthierarchy = new List<FlowGraphScriptable>(parents);
+			List<FlowGraphScriptable> toReturn = new List<FlowGraphScriptable>();
+			while (lasthierarchy.Count != 0)
+			{
+				List<FlowGraphScriptable> hierarchy = lasthierarchy;
+				lasthierarchy = new List<FlowGraphScriptable>();
+
+				foreach (var parent in hierarchy)
+				{
+					if (toReturn.Contains(parent)) continue;
+
+					toReturn.Add(parent);
+					if (parent.parents.Count > 0) lasthierarchy.AddRange(parent.parents);
+				}
+			}
+
+			return toReturn;
+		}
+
+		[SerializeField] public List<FlowGraphScriptable> parents = new List<FlowGraphScriptable>();
 		[SerializeField] public NodeDataList nodes = new NodeDataList();
 
 		public EntryNodeData EntryNode
@@ -386,8 +410,10 @@ namespace Com.Github.Knose1.Flow.Engine.Settings
 		public void AddNode(NodeData.NodeData nodeData) => nodes.AddNode(nodeData);
 		public void UnshiftNode(NodeData.NodeData nodeData) => nodes.UnshiftNode(nodeData);
 		public bool IsConnectionRegistered(ConnectorData connectorData) => nodes.IsConnectionRegistered(connectorData);
-		public ConnectorData GetConnectorData(NodeData.NodeData input, int inputPortId, NodeData.NodeData output, int outputPortId) => nodes.AddConnector(input, inputPortId, output, outputPortId);
+		public ConnectorData AddConnector(NodeData.NodeData input, int inputPortId, NodeData.NodeData output, int outputPortId) => nodes.AddConnector(input, inputPortId, output, outputPortId);
 	}
+
+	//IDEA : Add FlowGraphScriptable Variant |or| Add FlowGraphScriptable parameters
 }
 
 namespace Com.Github.Knose1.Flow.Engine.Settings.NodeData
@@ -533,7 +559,8 @@ namespace Com.Github.Knose1.Flow.Engine.Settings.NodeData
 			Instantiate,
 			Constructor,
 			Event,
-			Empty
+			Empty,
+			SubState
 		}
 
 		[SerializeField] public string name;
@@ -542,8 +569,9 @@ namespace Com.Github.Knose1.Flow.Engine.Settings.NodeData
 		[SerializeField] public string @class;
 		[SerializeField] public bool generateEvent;
 		[SerializeField] public List<StateNodePort> ports;
+		[SerializeField] public FlowGraphScriptable subState;
 
-		public StateNodeData(Vector2 position, string name, Execution executionMode, string @namespace, string @class, bool generateEvent, List<StateNodePort> ports) : base(position)
+		public StateNodeData(Vector2 position, string name, Execution executionMode, string @namespace, string @class, bool generateEvent, List<StateNodePort> ports, FlowGraphScriptable subState) : base(position)
 		{
 			this.name = name;
 			this.executionMode = executionMode;
@@ -551,6 +579,7 @@ namespace Com.Github.Knose1.Flow.Engine.Settings.NodeData
 			this.@class = @class;
 			this.generateEvent = generateEvent;
 			this.ports = ports;
+			this.subState = subState;
 		}
 
 		public StateNodePort ConnectionToStateNodePort(ConnectedPortData connectedPortData)

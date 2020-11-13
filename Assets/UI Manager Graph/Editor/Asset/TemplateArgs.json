@@ -20,6 +20,11 @@
 		"STATES": "protected ClassMachineState #{L_STATE_NAME}#State;",
 		"CREATE_STATES": "#{L_STATE_NAME}#State = new ClassMachineState(\"#{H_STATE_NAME}#\",#{L_STATE_NAME}#);"
 	},
+	"SubstateMachine": {
+		"SUBSTATE_FIELDS": "protected #{H_STATE_NAME}#Machine #{L_STATE_NAME}#SubMachine;",
+		"STATES": "protected SubstateMachine #{L_STATE_NAME}#Substate;",
+		"CREATE_STATES": "#{L_STATE_NAME}#Substate = new SubstateMachine(\"#{H_STATE_NAME}#\", #{L_STATE_NAME}#SubMachine = new #{H_STATE_NAME}#Machine(this));"
+	},
 	"ALLOW_TRIGGERS": "AllowTrigger(\"#{TRIGGER}#\");",
 	"ADD_TRIGGERS": "#{L_STATE_NAME_0}#State.AddTrigger(\"#{TRIGGER}#\",#{L_STATE_NAME_1}#State, #{CREATE_THREAD}#);",
 	"ADD_EVENTS": "#{L_STATE_NAME}#State.OnStart += (Thread thread) => { On#{H_STATE_NAME}#?.Invoke(); };",

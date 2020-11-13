@@ -43,14 +43,12 @@ namespace Com.Github.Knose1.Flow.Editor
 		/// - #{ENTRY_STATE}# : The first state to be executed
 		/// </summary>
 		public const string CLASS_TEMPLATE = ASSET_FOLDER+"Class_template.cs.txt";
+		public const string SUBSTATE_CLASS_TEMPLATE = ASSET_FOLDER+"SubStateClass_template.cs.txt";
 
 		/// <summary>
 		/// <see cref="Generate.TemplateJsonData"/>
 		/// </summary>
 		public const string ARGS_TEMPLATE = ASSET_FOLDER+"TemplateArgs.json";
-
-
-
 	}
 
 	/// <summary>
@@ -151,12 +149,21 @@ namespace Com.Github.Knose1.Flow.Editor
 
 			StateNode.StateOutputPort.OnDataChange += OnElementChange;
 			FlowGraphNode.OnChange += OnElementChange;
+			StateNode.OnSubstateChange += StateNode_OnSubstateChange;
 			FlowGraphEdge.OnChange += OnElementChange;
 			FlowGraphEdge.OnAddReroute += FlowGraphEdge_OnAddReroute;
 			FlowGraphPort.OnConnection += FlowGraphPort_OnConnection;
 			RerouteNode.OnChange += OnElementChange;
 		}
 
+		private bool StateNode_OnSubstateChange(FlowGraphScriptable newScriptable)
+		{
+			FlowGraphScriptable targetScriptable = manager.Target;
+			if (newScriptable == null) return true;
+
+			//Returne false when found
+			return targetScriptable.ParentHierachyToList().Contains(newScriptable);
+		}
 
 		public override void BuildContextualMenu(ContextualMenuPopulateEvent evt)
 		{
@@ -511,7 +518,7 @@ namespace Com.Github.Knose1.Flow.Editor
 
 				else if (nodeAndIndex.type == typeof(RerouteData))
 				{
-					nodeData = target.reroute[nodeAndIndex.index];
+					nodeData = target.reroutes[nodeAndIndex.index];
 					node = CreateRetoute();
 				}
 
@@ -574,6 +581,12 @@ namespace Com.Github.Knose1.Flow.Editor
 		/// </summary>
 		private void Manager_OnDataChange()
 		{
+			List<FlowGraphScriptable> parents = manager.Target.parents;
+			for (int i = parents.Count - 1; i >= 0; i--)
+			{
+				if (parents[i] is null) parents.Remove(null);
+			}
+
 			isInit = true;
 			isUnserializing = true;
 
@@ -602,7 +615,7 @@ namespace Com.Github.Knose1.Flow.Editor
 			catch (Exception err)
 			{
 				Debug.LogError(err);
-				Debug.LogWarning("[" + nameof(FlowGraph) + "] An error occured when Generating the graph");
+				Debug.LogWarning("[" + nameof(FlowGraph) + "] An error occured when Unserializing the graph");
 			}
 
 			isUnserializing = false;
@@ -859,6 +872,7 @@ namespace Com.Github.Knose1.Flow.Editor
 
 			FlowGraphNode.OnChange -= OnElementChange;
 			FlowGraphEdge.OnChange -= OnElementChange;
+			StateNode.OnSubstateChange -= StateNode_OnSubstateChange;
 			FlowGraphEdge.OnAddReroute -= FlowGraphEdge_OnAddReroute;
 			FlowGraphPort.OnConnection -= FlowGraphPort_OnConnection;
 			RerouteNode.OnChange -= OnElementChange;

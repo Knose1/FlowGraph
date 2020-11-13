@@ -17,8 +17,9 @@ namespace Com.Github.Knose1.Flow.Engine.Machine
 		private int _id = 0;
 		public int Id => _id;
 
-		private StateMachine _stateMachine;
-		public StateMachine StateMachine => _stateMachine;
+		private StateMachine.Machine _Machine;
+		public StateMachine.Machine Machine => _Machine;
+		public StateMachine StateMachine => _Machine.StateMachine;
 
 		public event Action<Thread, MachineState> OnChange;
 		public event Action<Thread> OnDie;
@@ -35,10 +36,10 @@ namespace Com.Github.Knose1.Flow.Engine.Machine
 		private bool isDead = false;
 		private bool isChecked = false;
 
-		public Thread(StateMachine stateMachine)
+		public Thread(StateMachine.Machine stateMachine)
 		{
 			_id = ++staticId;
-			_stateMachine = stateMachine;
+			_Machine = stateMachine;
 		}
 
 		/// <summary>
@@ -48,7 +49,7 @@ namespace Com.Github.Knose1.Flow.Engine.Machine
 		/// <param name="createThread">If the state create a thred</param>
 		/// <param name="negativeFilter">A list of machine state to exclude from searching</param>
 		/// <returns></returns>
-		public MachineState GetNextState(string trigger, out bool createThread, List<MachineState> negativeFilter = null)
+		public State.MachineState GetNextState(string trigger, out bool createThread, List<State.MachineState> negativeFilter = null)
 		{
 			createThread = false;
 
@@ -65,7 +66,7 @@ namespace Com.Github.Knose1.Flow.Engine.Machine
 		public void CheckForTriggersInCurrentState()
 		{
 			isChecked = true;
-			_stateMachine.CheckForTrigger(this);
+			_Machine.CheckForTrigger(this);
 		}
 
 		public void Update()
@@ -74,7 +75,7 @@ namespace Com.Github.Knose1.Flow.Engine.Machine
 
 			if (nextState != null)
 			{
-				MachineState oldCurrentState = currentState;
+				State.MachineState oldCurrentState = currentState;
 				OnNewState();
 				if (isDead) return;
 
@@ -99,8 +100,8 @@ namespace Com.Github.Knose1.Flow.Engine.Machine
 			currentState = nextState;
 
 #if UNITY_EDITOR || DEVELOPEMENT_BUILD
-			if (_stateMachine.IsDebug)
-				Debug.Log(_stateMachine.DebugTag + " New state \"" + currentState.name + "\" on thread, id : " + _id);
+			if (_Machine.IsDebug)
+				Debug.Log(_Machine.DebugTag + " New state \"" + currentState.name + "\" on thread, id : " + _id);
 #endif
 
 			currentState.Start(this);
@@ -129,7 +130,7 @@ namespace Com.Github.Knose1.Flow.Engine.Machine
 		/// </summary>
 		/// <param name="state">The state to add</param>
 		/// <param name="force">Force will directly add the state without waiting for the next update</param>
-		public void SetState(MachineState state, bool force = false)
+		public void SetState(State.MachineState state, bool force = false)
 		{
 			nextState = state;
 			if (force) OnNewState(false);

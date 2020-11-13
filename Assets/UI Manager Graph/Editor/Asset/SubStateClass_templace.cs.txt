@@ -1,19 +1,11 @@
 ﻿//Generated class
 //If you need to modify the class, override it
 
-
-using System;
-using UnityEngine;
-using Com.Github.Knose1.Flow.Engine.Machine;
-using Com.Github.Knose1.Flow.Engine.Machine.State;
-
-namespace #{NAMESPACE}#
+/// <summary>
+/// GENERATED SUBSTATE CLASS
+/// </summary>
+public class #{CLASS}#Machine : Machine
 {
-	/// <summary>
-	/// GENERATED CLASS
-	/// </summary>
-	public class #{CLASS}# : StateMachine
-	{
 		#{EVENTS}#
 
 		#{GO_FIELDS}#
@@ -24,6 +16,8 @@ namespace #{NAMESPACE}#
 		
 		#{STATES}#
 		
+		public #{CLASS}#Machine(StateMachine stateMachine) : base(stateMachine){}
+
 		protected override void SetupMachine()
 		{
 			base.SetupMachine();
@@ -36,7 +30,6 @@ namespace #{NAMESPACE}#
 
 			#{ADD_EVENTS}#
 		}
-		
 
 		#{ENTRY_STATE}#
 		

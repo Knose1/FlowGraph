@@ -20,6 +20,7 @@ namespace Com.Github.Knose1.Flow.Editor
 	/// </summary>
 	public abstract class FlowGraphNode : UnityEditor.Experimental.GraphView.Node
 	{
+		protected static void CallOnChange() => OnChange?.Invoke();
 		public static event Action OnChange;
 
 		private const int TITLE_BORDER_TOP_WIDTH = 2;
@@ -202,7 +203,7 @@ namespace Com.Github.Knose1.Flow.Editor
 
 		private static void Field_OnValueChanged<T>(ChangeEvent<T> evt)
 		{
-			if (evt.newValue.Equals(evt.previousValue)) return;
+			if (Equals(evt.newValue, evt.previousValue)) return;
 			OnChange?.Invoke();
 		}
 

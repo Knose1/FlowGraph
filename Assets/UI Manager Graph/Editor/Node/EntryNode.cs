@@ -10,10 +10,21 @@ namespace Com.Github.Knose1.Flow.Editor.Node
 	public class EntryNode : FlowGraphNode, IUnique
 	{
 		protected const string ENTRY = "Entry";
-
+		private const string SUBSTATE = "Substate";
 		private TextElement generatedClassTextElement;
 
 		private TextField namespaceField;
+
+		public void SetSubState()
+		{
+			title = SUBSTATE;
+
+			Class = "";
+			Namespace = "";
+			
+			RemoveInspectorElement(classField);
+			RemoveInspectorElement(namespaceField);
+		}
 
 		public string Namespace
 		{

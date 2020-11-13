@@ -99,7 +99,7 @@ namespace Com.Github.Knose1.Flow.Editor
 		{
 			if (evt.keyCode == KeyCode.S && evt.ctrlKey)
 			{
-				manager.Save();
+				ExecuteSave();
 			} 
 		}
 
@@ -159,7 +159,7 @@ namespace Com.Github.Knose1.Flow.Editor
 			toolbar.Add(generate);
 
 			//Save
-			save = new ToolbarButton(() => { manager.Save(); });
+			save = new ToolbarButton(ExecuteSave);
 			save.text = SAVE;
 			toolbar.Add(save);
 
@@ -184,12 +184,43 @@ namespace Com.Github.Knose1.Flow.Editor
 			manager.ShowAsDirty();
 		}
 
+		private void ExecuteSave()
+		{
+			manager.Save();
+		}
+
 		protected void Manager_OnSaving()
 		{
 			isDirty = false;
 
 			Debug.Log("[" + nameof(FlowWindow) + "] Saving...");
+			
+			//Get all subState
+			Engine.Settings.FlowGraphScriptable target = manager.Target;
+			var stateNodes = target.StateNodes;
+			foreach (var stateNode in stateNodes)
+			{
+				if (stateNode.executionMode == Engine.Settings.NodeData.StateNodeData.Execution.SubState)
+				{
+					Engine.Settings.FlowGraphScriptable subState = stateNode.subState;
+					if (subState != null)
+						subState.parents.Remove(target);
+				}
+			}
+
 			graph.SaveIn(manager.Target);
+			
+			stateNodes = target.StateNodes;
+			foreach (var stateNode in stateNodes)
+			{
+				if (stateNode.executionMode == Engine.Settings.NodeData.StateNodeData.Execution.SubState)
+				{
+					Engine.Settings.FlowGraphScriptable subState = stateNode.subState;
+					if (subState != null)
+						subState.parents.Add(target);
+				}
+			}
+
 			save.text = SAVE;
 			titleContent.text = TITLE;
 			Debug.Log("[" + nameof(FlowWindow) + "] Saved !");
