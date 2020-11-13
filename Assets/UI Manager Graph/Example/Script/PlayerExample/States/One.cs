@@ -11,6 +11,7 @@ namespace Com.Github.Knose1.Flow.Example.BulletExample
 		public void OnStart(Thread thread)
 		{
 			Debug.Log("One");
+			(thread.StateMachine as BulletTest).CreateOne();
 		}
 	}
 }

@@ -161,11 +161,15 @@ MonoBehaviour:
   m_GameObject: {fileID: 1870565035}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 01f0aadb75713e04b98cf5efc58887c9, type: 3}
+  m_Script: {fileID: 11500000, guid: c5ddfe87d08e3424b8feb3f5d08c50cc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   _debug: 1
   startOnAwake: 1
+  m_bulletOnePrefab: {fileID: 8328428030264684578, guid: 8dade92fbf563d74699ba1de0830443e,
+    type: 3}
+  m_bulletTwoPrefab: {fileID: 5566324844334124469, guid: 7476f647a78a6114ba063098727f3e35,
+    type: 3}
 --- !u!1 &1953575558
 GameObject:
   m_ObjectHideFlags: 0
