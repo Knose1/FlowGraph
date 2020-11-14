@@ -22,8 +22,6 @@ namespace Com.Github.Knose1.Flow.Editor.WindowElements
 			this.name = nameof(TriggerList);
 			this.AddToClassList(nameof(TriggerList));
 
-			this.StretchToParentSize();
-			
 			StateNode.StateOutputPort.OnTriggerChange += StateOutputPort_OnTriggerChange;
 			name = nameof(TriggerList);
 
@@ -32,6 +30,11 @@ namespace Com.Github.Knose1.Flow.Editor.WindowElements
 			Add(title);
 
 			GenerateListView();
+		}
+
+		public void UpdateSize()
+		{
+			this.StretchToParentSize();
 		}
 
 		private void GenerateListView()
@@ -86,18 +89,15 @@ namespace Com.Github.Knose1.Flow.Editor.WindowElements
 			listView.itemsSource = this.labels;
 			ListView_onItemChosen(listView.selectedItem);
 		}
+		public void UnSelectItems()
+		{
+			listView.selectedIndex = -1;
+		}
 
 		public void Dispose()
 		{
 			StateNode.StateOutputPort.OnTriggerChange -= StateOutputPort_OnTriggerChange;
 		}
 
-		public class TriggerListElement : VisualElement
-		{
-			public TriggerListElement()
-			{
-
-			}
-		}
 	}
 }
