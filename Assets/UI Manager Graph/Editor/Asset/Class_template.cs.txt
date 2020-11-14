@@ -40,7 +40,8 @@ namespace #{NAMESPACE}#
 
 		#{ENTRY_STATE}#
 		
-		#{SUBSTATE_CLASS}#
 		
 	}
+	
+	#{SUBSTATE_CLASS}#
 }

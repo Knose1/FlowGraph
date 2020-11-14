@@ -11,45 +11,6 @@ using UnityEngine.UIElements;
 
 namespace Com.Github.Knose1.Flow.Editor
 {
-	public static class FlowGraphAssetDatabase
-	{
-		public const string ASSET_FOLDER = "Assets/UI Manager Graph/Editor/Asset/";
-
-		/// <summary>
-		/// The stylesheet name
-		/// </summary>
-		public const string RESSOURCE_STYLESHEET = ASSET_FOLDER+"Graph.uss";
-		/// <summary>
-		/// The stylesheet black name
-		/// </summary>
-		public const string RESSOURCE_STYLESHEET_BLACK = ASSET_FOLDER+"GraphBlack.uss";
-		/// <summary>
-		/// The stylesheet white name
-		/// </summary>
-		public const string RESSOURCE_STYLESHEET_WHITE = ASSET_FOLDER+"GraphWhite.uss";
-
-		/// <summary>
-		/// Arguments : <br/> 
-		/// - #{NAMESPACE}#: The class's namespace
-		/// - #{CLASS}#: The class's name
-		/// - #{EVENTS}#: The event fields
-		/// - #{GO_FIELDS}#: The game object fields
-		/// - #{CLASS_FIELDS}#: The class object fields
-		/// - #{STATES}#: The MachineState fields
-		/// - #{CREATE_STATES}#: Where to create the states
-		/// - #{ALLOW_TRIGGERS}# : Where to allow triggers
-		/// - #{ADD_TRIGGERS}# : Where to add triggers to states
-		/// - #{ADD_EVENTS}# : Where to add events to
-		/// - #{ENTRY_STATE}# : The first state to be executed
-		/// </summary>
-		public const string CLASS_TEMPLATE = ASSET_FOLDER+"Class_template.cs.txt";
-		public const string SUBSTATE_CLASS_TEMPLATE = ASSET_FOLDER+"SubStateClass_template.cs.txt";
-
-		/// <summary>
-		/// <see cref="Generate.TemplateJsonData"/>
-		/// </summary>
-		public const string ARGS_TEMPLATE = ASSET_FOLDER+"TemplateArgs.json";
-	}
 
 	/// <summary>
 	/// Flow graph, you can place <see cref="FlowGraphNode"/>s on it, move the nodes, link them etc...<br/>
@@ -160,9 +121,10 @@ namespace Com.Github.Knose1.Flow.Editor
 		{
 			FlowGraphScriptable targetScriptable = manager.Target;
 			if (newScriptable == null) return true;
+			if (newScriptable == targetScriptable) return false;
 
 			//Returne false when found
-			return targetScriptable.ParentHierachyToList().Contains(newScriptable);
+			return !targetScriptable.ParentHierachyToList().Contains(newScriptable);
 		}
 
 		public override void BuildContextualMenu(ContextualMenuPopulateEvent evt)
@@ -581,12 +543,6 @@ namespace Com.Github.Knose1.Flow.Editor
 		/// </summary>
 		private void Manager_OnDataChange()
 		{
-			List<FlowGraphScriptable> parents = manager.Target.parents;
-			for (int i = parents.Count - 1; i >= 0; i--)
-			{
-				if (parents[i] is null) parents.Remove(null);
-			}
-
 			isInit = true;
 			isUnserializing = true;
 
@@ -596,8 +552,16 @@ namespace Com.Github.Knose1.Flow.Editor
 			StateNode.StateOutputPort.DisposeAll();
 
 			//If there is no target, there is no graph to load
-			if (!manager.Target) return;
-			manager.Target.GetNodes(out List<NodeDataList.NodeAndIndex> nodes);
+			FlowGraphScriptable target = manager.Target;
+			if (!target) return;
+
+			List<FlowGraphScriptable> parents = target.parents;
+			for (int i = parents.Count - 1; i >= 0; i--)
+			{
+				if (parents[i] is null) parents.Remove(null);
+			}
+
+			target.GetNodes(out List<NodeDataList.NodeAndIndex> nodes);
 
 			try
 			{
@@ -610,13 +574,16 @@ namespace Com.Github.Knose1.Flow.Editor
 				}
 
 				//Generate Graph From Datas
-				GenerateGraphFromDatas(manager.Target.nodes, nodes);
+				GenerateGraphFromDatas(target.nodes, nodes);
 			}
 			catch (Exception err)
 			{
 				Debug.LogError(err);
 				Debug.LogWarning("[" + nameof(FlowGraph) + "] An error occured when Unserializing the graph");
 			}
+
+			if (target.parents.Count > 0)
+				entryNode.SetSubState();
 
 			isUnserializing = false;
 			isInit = false;
@@ -695,6 +662,7 @@ namespace Com.Github.Knose1.Flow.Editor
 		private EntryNode GenerateEntryPointNode()
 		{
 			EntryNode node = new EntryNode();
+
 
 			node.SetPosition(new Rect(100, 200, 100, 150));
 

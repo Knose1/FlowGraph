@@ -12,15 +12,44 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 514937b7f687f3b4996934d27f571918, type: 3}
   m_Name: TestSub
   m_EditorClassIdentifier: 
-  parents: []
+  parents:
+  - {fileID: 11400000, guid: ff4c90430f7e25f4c99dfce2a5e0d4c8, type: 2}
+  - {fileID: 11400000, guid: ff4c90430f7e25f4c99dfce2a5e0d4c8, type: 2}
   nodes:
     entryNode:
       position: {x: 100, y: 200}
       _isNotNull: 1
-      namespace: 
-      class: 
-    exitNode: []
-    stateNodes: []
+      stateNamespace: Hi
+      stateClass: MySubClass
+    exitNode:
+    - position: {x: 1047, y: 190}
+      _isNotNull: 1
+      exitType: 1
+    stateNodes:
+    - position: {x: 539, y: 176}
+      _isNotNull: 1
+      name: State1
+      executionMode: 3
+      stateNamespace: 
+      stateClass: 
+      generateEvent: 0
+      ports:
+      - trigger: Exit
+        createThread: 0
+        id: 1
+      subState: {fileID: 0}
     reroutes: []
     subStates: []
-    connections: []
+    connections:
+    - input:
+        nodeId: 2
+        portId: 0
+      output:
+        nodeId: 0
+        portId: 0
+    - input:
+        nodeId: 1
+        portId: 0
+      output:
+        nodeId: 2
+        portId: 1

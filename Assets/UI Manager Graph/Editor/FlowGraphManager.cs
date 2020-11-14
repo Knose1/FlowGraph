@@ -27,13 +27,16 @@ namespace Com.Github.Knose1.Flow.Editor
 		public event Action OnSaving;
 
 		protected FlowGraphScriptable _target;
+		protected Status _currentStatus;
+
 		public FlowGraphScriptable Target => _target;
+		public Status CurrentStatus => _currentStatus;
 
 
 		public void Init()
 		{
 			Selection.selectionChanged += Selection_SelectionChanged;
-			
+
 			Selection_SelectionChanged();
 		}
 
@@ -96,7 +99,7 @@ namespace Com.Github.Knose1.Flow.Editor
 			folderArg = Path.GetDirectoryName(folderArg);
 
 			string path = EditorUtility.SaveFilePanel(
-				title:"Generate Script", folderArg, _target.EntryNode.@class, "cs"
+				title:"Generate Script", folderArg, _target.EntryNode.stateClass, "cs"
 			);
 			string assetPath = "Assets"+path.Replace(Application.dataPath, "");
 
@@ -131,12 +134,61 @@ namespace Com.Github.Knose1.Flow.Editor
 
 		private void Selection_SelectionChanged()
 		{
+			string path = Path.Combine(Application.dataPath, FlowGraphAssetDatabase.GUID_TEXT_FILE.Substring(FlowGraphAssetDatabase.ASSET_ROOT_NAME.Length));
+			string GUID = null;
+			if (Selection.assetGUIDs.Length == 0)
+			{
+				if (_target != null) return;
+
+				StreamReader streamReader = new StreamReader(path);
+				GUID = streamReader.ReadToEnd();
+				streamReader.Close();
+			}
+			else
+			{
+				GUID = Selection.assetGUIDs[0];
+			}
+
+			UnityEngine.Object obj = AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(AssetDatabase.GUIDToAssetPath(GUID));
+			if (!(obj is FlowGraphScriptable))
+			{
+				if (_target != null) return;
+
+				_currentStatus = Status.NotSelected;
+				OnSelectionStatusChange?.Invoke(_currentStatus);
+				OnDataChange?.Invoke();
+				return;
+			}
+
+
+			StreamWriter streamWriter = null;
+			if (File.Exists(path))
+			{
+				streamWriter = new StreamWriter(path, false);
+			}
+			else
+			{
+				streamWriter = File.CreateText(path);
+			}
+
+			streamWriter.Write(GUID);
+			streamWriter.Close();
+
+			_target = obj as FlowGraphScriptable;
+			OnSelectionStatusChange?.Invoke(_currentStatus);
+			OnDataChange?.Invoke();
+		}
+
+		[Obsolete]
+		private void Selection_SelectionChanged_Old()
+		{
 			int length = Selection.assetGUIDs.Length;
 			if (length > 1)
 			{
 				_target = null;
 
-				OnSelectionStatusChange?.Invoke(Status.MultipleEdit);
+				_currentStatus = Status.MultipleEdit;
+				OnSelectionStatusChange?.Invoke(_currentStatus);
 				OnDataChange?.Invoke();
 				return;
 			}
@@ -145,7 +197,8 @@ namespace Com.Github.Knose1.Flow.Editor
 			{
 				if (_target != null) return;
 
-				OnSelectionStatusChange?.Invoke(Status.NotSelected);
+				_currentStatus = Status.NotSelected;
+				OnSelectionStatusChange?.Invoke(_currentStatus);
 				OnDataChange?.Invoke();
 				return;
 			}
@@ -155,14 +208,16 @@ namespace Com.Github.Knose1.Flow.Editor
 			{
 				if (_target != null) return;
 
-				OnSelectionStatusChange?.Invoke(Status.NotSelected);
+				_currentStatus = Status.NotSelected;
+				OnSelectionStatusChange?.Invoke(_currentStatus);
 				OnDataChange?.Invoke();
 				return;
 			}
 
 			_target = obj as FlowGraphScriptable;
 
-			OnSelectionStatusChange?.Invoke(Status.NoProblem);
+			_currentStatus = Status.NoProblem;
+			OnSelectionStatusChange?.Invoke(_currentStatus);
 
 			//Load asset
 
@@ -173,6 +228,8 @@ namespace Com.Github.Knose1.Flow.Editor
 		{
 			Selection.selectionChanged -= Selection_SelectionChanged;
 			OnDataChange = null;
+			OnSelectionStatusChange = null;
+			OnSaving = null;
 		}
 	}
 }

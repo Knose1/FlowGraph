@@ -1,11 +1,12 @@
-﻿//Generated class
-//If you need to modify the class, override it
-
-/// <summary>
-/// GENERATED SUBSTATE CLASS
-/// </summary>
-public class #{CLASS}#Machine : Machine
+﻿namespace #{NAMESPACE}#
 {
+	using static Com.Github.Knose1.Flow.Engine.Machine.StateMachine;
+	
+	/// <summary>
+	/// GENERATED SUBSTATE CLASS
+	/// </summary>
+	public class #{CLASS}#Machine : Machine
+	{
 		#{EVENTS}#
 
 		#{GO_FIELDS}#
@@ -33,7 +34,8 @@ public class #{CLASS}#Machine : Machine
 
 		#{ENTRY_STATE}#
 		
-		#{SUBSTATE_CLASS}#
 		
 	}
+	
+	#{SUBSTATE_CLASS}#
 }

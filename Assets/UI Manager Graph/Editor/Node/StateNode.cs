@@ -282,7 +282,7 @@ namespace Com.Github.Knose1.Flow.Editor.Node
 		protected Color CONSTRUCTOR_COLOR = new Color(0.6f, 1f,0.6f);
 		protected Color EVENT_COLOR = new Color(177/255f, 160/255f, 246/255f);
 		protected Color EMPTY_COLOR = Color.white * 4 / 5;
-		protected Color SUBSTATE_COLOR = new Color(0, 160/255f, 246/255f);
+		protected Color SUBSTATE_COLOR = new Color(255/255f, 150/255f, 200/255f);
 
 		//*/////////////////////////////////////*//
 		//                                       //
@@ -605,8 +605,8 @@ namespace Com.Github.Knose1.Flow.Editor.Node
 			StateNode toReturn = new StateNode();
 			toReturn.StateName = data.name;
 			toReturn.ExecutionMode = data.executionMode;
-			toReturn.Namespace = data.@namespace;
-			toReturn.Class = data.@class;
+			toReturn.Namespace = data.stateNamespace;
+			toReturn.Class = data.stateClass;
 			toReturn.GenerateEvent = data.generateEvent;
 			toReturn.SubState = data.subState;
 

@@ -15,27 +15,75 @@ MonoBehaviour:
   parents: []
   nodes:
     entryNode:
-      position: {x: 100, y: 200}
+      position: {x: 96, y: 188}
       _isNotNull: 1
-      namespace: 
-      class: 
-    exitNode: []
+      stateNamespace: Com.Github.Knose1.Flow.Example.SubClass
+      stateClass: TestSubclass
+    exitNode:
+    - position: {x: 1954, y: 247}
+      _isNotNull: 1
+      exitType: 0
     stateNodes:
-    - position: {x: 470, y: 187}
+    - position: {x: 943, y: 249}
       _isNotNull: 1
-      name: State
+      name: Hello
       executionMode: 4
-      namespace: 
-      class: 
+      stateNamespace: 
+      stateClass: 
       generateEvent: 0
-      ports: []
+      ports:
+      - trigger: OwO
+        createThread: 0
+        id: 1
+      subState: {fileID: 11400000, guid: 57ded1b84bf2b874983c58a3d5a7ad3c, type: 2}
+    - position: {x: 1440, y: 241}
+      _isNotNull: 1
+      name: Exit
+      executionMode: 2
+      stateNamespace: 
+      stateClass: 
+      generateEvent: 0
+      ports:
+      - trigger: 
+        createThread: 0
+        id: 1
       subState: {fileID: 0}
+    - position: {x: 468, y: 188}
+      _isNotNull: 1
+      name: OwO
+      executionMode: 4
+      stateNamespace: 
+      stateClass: 
+      generateEvent: 0
+      ports:
+      - trigger: Test
+        createThread: 0
+        id: 1
+      subState: {fileID: 11400000, guid: 57ded1b84bf2b874983c58a3d5a7ad3c, type: 2}
     reroutes: []
     subStates: []
     connections:
     - input:
-        nodeId: 1
+        nodeId: 4
         portId: 0
       output:
         nodeId: 0
         portId: 0
+    - input:
+        nodeId: 1
+        portId: 0
+      output:
+        nodeId: 3
+        portId: 1
+    - input:
+        nodeId: 2
+        portId: 0
+      output:
+        nodeId: 4
+        portId: 1
+    - input:
+        nodeId: 3
+        portId: 0
+      output:
+        nodeId: 2
+        portId: 1

@@ -34,6 +34,10 @@ namespace Com.Github.Knose1.Flow.Editor
 		private StyleSheet styleSheet;
 		private StyleSheet styleSheetColor;
 
+		private ToolbarButton generate;
+		private Toolbar toolbar;
+		private int generateIndex;
+
 		[MenuItem("Window/Game/Flow")]
 		static public void Open()
 		{
@@ -59,9 +63,27 @@ namespace Com.Github.Knose1.Flow.Editor
 			GenerateToolbar();
 
 			manager.OnSaving += Manager_OnSaving;
+
 			manager.Init();
 
 			rootVisualElement.RegisterCallback<KeyDownEvent>(OnKeyDown);
+
+			EditorApplication.playModeStateChanged += EditorApplication_playModeStateChanged;
+		}
+
+		private void EditorApplication_playModeStateChanged(PlayModeStateChange obj)
+		{
+			switch (obj)
+			{
+				case PlayModeStateChange.EnteredPlayMode:
+					if (generate.parent != null) toolbar.Remove(generate);
+					break;
+				case PlayModeStateChange.EnteredEditMode:
+					if (generate.parent == null) toolbar.Insert(generateIndex, generate);
+					break;
+				default:
+					break;
+			}
 		}
 
 		private void LoadFile(string filename, out StyleSheet styleSheet)
@@ -100,7 +122,14 @@ namespace Com.Github.Knose1.Flow.Editor
 			if (evt.keyCode == KeyCode.S && evt.ctrlKey)
 			{
 				ExecuteSave();
-			} 
+				return;
+			}
+
+			if (evt.keyCode == KeyCode.F11)
+			{
+				maximized = !maximized;
+				graph.Focus();
+			}
 		}
 
 		protected virtual void GenerateGraph()
@@ -118,7 +147,7 @@ namespace Com.Github.Knose1.Flow.Editor
 
 		protected virtual void GenerateToolbar()
 		{
-			Toolbar toolbar = new Toolbar();
+			toolbar = new Toolbar();
 			toolbar.StretchToParentWidth();
 
 			//Button Screen Node
@@ -154,8 +183,9 @@ namespace Com.Github.Knose1.Flow.Editor
 			toolbar.Add(newAsset);
 
 			//Generate
-			ToolbarButton generate  = new ToolbarButton(manager.GenerateCode);
+			generate  = new ToolbarButton(manager.GenerateCode);
 			generate.text = "Generate";
+			generateIndex = toolbar.childCount;
 			toolbar.Add(generate);
 
 			//Save
@@ -235,6 +265,7 @@ namespace Com.Github.Knose1.Flow.Editor
 			switch (status)
 			{
 				case FlowGraphManager.Status.NoProblem:
+					manager.Target.AskForReloadList();
 					break;
 				case FlowGraphManager.Status.MultipleEdit:
 					break;
@@ -285,6 +316,8 @@ namespace Com.Github.Knose1.Flow.Editor
 			if (graph != null) graph.Dispose();
 			if (manager != null) manager.Dispose();
 
+
+			EditorApplication.playModeStateChanged -= EditorApplication_playModeStateChanged;
 
 			rootVisualElement.UnregisterCallback<KeyDownEvent>(OnKeyDown);
 		}

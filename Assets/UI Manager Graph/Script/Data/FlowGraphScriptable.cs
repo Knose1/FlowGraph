@@ -47,6 +47,7 @@ namespace Com.Github.Knose1.Flow.Engine.Settings
 		/// </summary>
 		public List<ConnectorData> connections;
 		
+		private float lastTimeChecked = 0;
 		private bool isDataAdded = true;
 		private List<NodeData.NodeData> lastNodes;
 
@@ -66,6 +67,12 @@ namespace Com.Github.Knose1.Flow.Engine.Settings
 			this.connections = connections;
 		}
 
+		public void AskForReloadList()
+		{
+			lastTimeChecked = 0;
+			isDataAdded = true;
+		}
+
 		/// <summary>
 		/// Return true if there is an error
 		/// </summary>
@@ -77,16 +84,16 @@ namespace Com.Github.Knose1.Flow.Engine.Settings
 			List<string> namespaceToCheck = new List<string>();
 			List<string> classToCheck = new List<string>();
 			
-			namespaceToCheck.Add(entryNode.@namespace);
-			classToCheck.Add(entryNode.@class);
+			namespaceToCheck.Add(entryNode.stateNamespace);
+			classToCheck.Add(entryNode.stateClass);
 			
 			for (int i = stateNodes.Count - 1; i >= 0; i--)
 			{
 				StateNodeData stateNode = stateNodes[i];
 				if (stateNode.executionMode == StateNodeData.Execution.Constructor)
 				{
-					namespaceToCheck.Add(stateNode.@namespace);
-					classToCheck.Add(stateNode.@class);
+					namespaceToCheck.Add(stateNode.stateNamespace);
+					classToCheck.Add(stateNode.stateClass);
 				}
 			}
 
@@ -246,11 +253,16 @@ namespace Com.Github.Knose1.Flow.Engine.Settings
 		/// <param name="nodes"></param>
 		public void GetNodes(out List<NodeData.NodeData> nodes)
 		{
+			float time = Time.time;
+			isDataAdded = isDataAdded || (time - lastTimeChecked) > 0.5f;
+
 			if (!isDataAdded)
 			{
 				nodes = lastNodes;
 				return;
 			}
+
+			lastTimeChecked = time;
 
 			nodes = new List<NodeData.NodeData>();
 			nodes.Add(entryNode);
@@ -404,6 +416,7 @@ namespace Com.Github.Knose1.Flow.Engine.Settings
 			set => nodes.connections = value;
 		}
 
+		public void AskForReloadList() => nodes.AskForReloadList();
 		public void ClearAllDatas() => nodes.ClearAllDatas();
 		public void GetNodes(out List<NodeDataList.NodeAndIndex> nodes) => this.nodes.GetNodes(out nodes);
 
@@ -518,13 +531,13 @@ namespace Com.Github.Knose1.Flow.Engine.Settings.NodeData
 	[Serializable]
 	public class EntryNodeData : NodeData
 	{
-		[SerializeField] public string @namespace;
-		[SerializeField] public string @class;
+		[SerializeField, FormerlySerializedAs("namespace")] public string stateNamespace;
+		[SerializeField, FormerlySerializedAs("class")] public string stateClass;
 
 		public EntryNodeData(Vector2 position, string @namespace, string @class) : base(position)
 		{
-			this.@namespace = @namespace;
-			this.@class = @class;
+			this.stateNamespace = @namespace;
+			this.stateClass = @class;
 		}
 
 		public NodeData GetFirstNode(NodeDataList list)
@@ -565,8 +578,8 @@ namespace Com.Github.Knose1.Flow.Engine.Settings.NodeData
 
 		[SerializeField] public string name;
 		[SerializeField] public Execution executionMode;
-		[SerializeField] public string @namespace;
-		[SerializeField] public string @class;
+		[SerializeField, FormerlySerializedAs("namespace")] public string stateNamespace;
+		[SerializeField, FormerlySerializedAs("class")] public string stateClass;
 		[SerializeField] public bool generateEvent;
 		[SerializeField] public List<StateNodePort> ports;
 		[SerializeField] public FlowGraphScriptable subState;
@@ -575,8 +588,8 @@ namespace Com.Github.Knose1.Flow.Engine.Settings.NodeData
 		{
 			this.name = name;
 			this.executionMode = executionMode;
-			this.@namespace = @namespace;
-			this.@class = @class;
+			this.stateNamespace = @namespace;
+			this.stateClass = @class;
 			this.generateEvent = generateEvent;
 			this.ports = ports;
 			this.subState = subState;

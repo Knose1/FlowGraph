@@ -1,29 +1,34 @@
 ﻿{
 	"EmptyState": {
+		"NAME_SUFFIX": "",
 		"STATES": "protected MachineState #{L_STATE_NAME}#State;",
 		"CREATE_STATES": "#{L_STATE_NAME}#State = new MachineState(\"#{H_STATE_NAME}#\");"
 	},
 	"EventState": {
+		"NAME_SUFFIX": "",
 		"EVENTS": "public event Action On#{H_STATE_NAME}#;",
 		"STATES": "protected MachineState #{L_STATE_NAME}#State;",
 		"CREATE_STATES": "#{L_STATE_NAME}#State = new MachineState(\"#{H_STATE_NAME}#\");"
 	},
 	"GoState": {
+		"NAME_SUFFIX": "",
 		"EVENTS": "public event Action On#{H_STATE_NAME}#;",
 		"GO_FIELDS": "[SerializeField] protected GameObject #{L_STATE_NAME}#;",
 		"STATES": "protected GameObjectMachineState #{L_STATE_NAME}#State;",
 		"CREATE_STATES": "#{L_STATE_NAME}#State = new GameObjectMachineState(\"#{H_STATE_NAME}#\",#{L_STATE_NAME}#);"
 	},
 	"ClassMachineState": {
+		"NAME_SUFFIX": "",
 		"EVENTS": "public event Action On#{H_STATE_NAME}#;",
 		"CLASS_FIELDS": "protected #{NAMESPACE}#.#{CLASS}# #{L_STATE_NAME}# = new #{NAMESPACE}#.#{CLASS}#();",
 		"STATES": "protected ClassMachineState #{L_STATE_NAME}#State;",
 		"CREATE_STATES": "#{L_STATE_NAME}#State = new ClassMachineState(\"#{H_STATE_NAME}#\",#{L_STATE_NAME}#);"
 	},
 	"SubstateMachine": {
-		"SUBSTATE_FIELDS": "protected #{H_STATE_NAME}#Machine #{L_STATE_NAME}#SubMachine;",
-		"STATES": "protected SubstateMachine #{L_STATE_NAME}#Substate;",
-		"CREATE_STATES": "#{L_STATE_NAME}#Substate = new SubstateMachine(\"#{H_STATE_NAME}#\", #{L_STATE_NAME}#SubMachine = new #{H_STATE_NAME}#Machine(this));"
+		"NAME_SUFFIX": "Sub",
+		"SUBSTATE_FIELDS": "protected #{NAMESPACE}#.#{CLASS}#Machine #{L_STATE_NAME}#Machine;",
+		"STATES": "protected SubstateMachine #{L_STATE_NAME}#State;",
+		"CREATE_STATES": "#{L_STATE_NAME}#State = new SubstateMachine(\"#{H_STATE_NAME}#\", #{L_STATE_NAME}#Machine = new #{NAMESPACE}#.#{CLASS}#Machine(this));"
 	},
 	"ALLOW_TRIGGERS": "AllowTrigger(\"#{TRIGGER}#\");",
 	"ADD_TRIGGERS": "#{L_STATE_NAME_0}#State.AddTrigger(\"#{TRIGGER}#\",#{L_STATE_NAME_1}#State, #{CREATE_THREAD}#);",

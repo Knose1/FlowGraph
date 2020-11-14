@@ -5,6 +5,8 @@ using Com.Github.Knose1.Flow.Engine.Settings.NodeData;
 using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
+using UnityEditor;
+using UnityEngine;
 
 namespace Com.Github.Knose1.Flow.Editor.Generate
 {
@@ -14,7 +16,25 @@ namespace Com.Github.Knose1.Flow.Editor.Generate
 	/// </summary>
 	public static class GraphCodeGenerator
 	{
-		public const string CRLF = "\r\n";
+		public const string LF = "\n";
+		public const string CRLF = "\r"+LF;
+		public static string LineEnding 
+		{
+			get
+			{
+				switch (Application.platform)
+				{
+					case RuntimePlatform.OSXEditor:
+						return CRLF;
+					case RuntimePlatform.WindowsEditor:
+						return CRLF;
+					case RuntimePlatform.LinuxEditor:
+						return LF;
+					default:
+						return CRLF;
+				}
+			}
+		}
 
 		public static class Library
 		{
@@ -92,14 +112,14 @@ namespace Com.Github.Knose1.Flow.Editor.Generate
 		/// Function used to replace a template (input) by some values
 		/// </summary>
 		/// <param name="input"></param>
-		/// <param name="namespace"></param>
-		/// <param name="class"></param>
+		/// <param name="replaceNamespace"></param>
+		/// <param name="replaceClass"></param>
 		/// <param name="hStateName"></param>
 		/// <param name="lStateName"></param>
 		/// <param name="trigger"></param>
 		/// <param name="createThread"></param>
 		/// <returns></returns>
-		private static string ReplaceJsonDataTemplate(string input, string @namespace, string @class, string hStateName, string lStateName, string trigger, string createThread)
+		private static string ReplaceJsonDataTemplate(string input, string replaceNamespace, string replaceClass, string hStateName, string lStateName, string trigger, string createThread)
 		{
 			MatchCollection endStateMatch = END_STATE_REGEX.Matches(input);
 			MatchCollection stopStateMatch = STOP_STATE_REGEX.Matches(input);
@@ -114,8 +134,8 @@ namespace Com.Github.Knose1.Flow.Editor.Generate
 			List<MatchAndReplacer> replacers = MatchAndReplacer.JoinMultiple(
 				MatchAndReplacer.GetMatchAndReplacers(endStateMatch, StateMachine.Machine.END_STATE),
 				MatchAndReplacer.GetMatchAndReplacers(stopStateMatch, StateMachine.Machine.STOP_STATE),
-				MatchAndReplacer.GetMatchAndReplacers(namespaceMatch, @namespace),
-				MatchAndReplacer.GetMatchAndReplacers(classMatch, @class),
+				MatchAndReplacer.GetMatchAndReplacers(namespaceMatch, replaceNamespace),
+				MatchAndReplacer.GetMatchAndReplacers(classMatch, replaceClass),
 				MatchAndReplacer.GetMatchAndReplacers(hStateMatch, hStateName),
 				MatchAndReplacer.GetMatchAndReplacers(lStateMatch, lStateName),
 				MatchAndReplacer.GetMatchAndReplacers(triggerMatch, trigger),
@@ -148,8 +168,8 @@ namespace Com.Github.Knose1.Flow.Editor.Generate
 		/// <param name="lStateName_1"></param>
 		/// <returns></returns>
 		private static string ReplaceJsonDataTemplateMultiple(string input,
-			string @namespace_0, string @class_0, string hStateName_0, string lStateName_0, string trigger, string createThread,
-			string @namespace_1, string @class_1, string hStateName_1, string lStateName_1
+			string namespace_0, string class_0, string hStateName_0, string lStateName_0, string trigger, string createThread,
+			string namespace_1, string class_1, string hStateName_1, string lStateName_1
 		)
 		{
 			MatchCollection endStateMatch = END_STATE_REGEX.Matches(input);
@@ -171,15 +191,15 @@ namespace Com.Github.Knose1.Flow.Editor.Generate
 				MatchAndReplacer.GetMatchAndReplacers(endStateMatch, StateMachine.Machine.END_STATE),
 				MatchAndReplacer.GetMatchAndReplacers(stopStateMatch, StateMachine.Machine.STOP_STATE),
 
-				MatchAndReplacer.GetMatchAndReplacers(namespaceMatch_0, @namespace_0),
-				MatchAndReplacer.GetMatchAndReplacers(classMatch_0, @class_0),
+				MatchAndReplacer.GetMatchAndReplacers(namespaceMatch_0, namespace_0),
+				MatchAndReplacer.GetMatchAndReplacers(classMatch_0, class_0),
 				MatchAndReplacer.GetMatchAndReplacers(hStateMatch_0, hStateName_0),
 				MatchAndReplacer.GetMatchAndReplacers(lStateMatch_0, lStateName_0),
 				MatchAndReplacer.GetMatchAndReplacers(triggerMatch, trigger),
 				MatchAndReplacer.GetMatchAndReplacers(createThreadMatch, createThread),
 
-				MatchAndReplacer.GetMatchAndReplacers(namespaceMatch_1, @namespace_1),
-				MatchAndReplacer.GetMatchAndReplacers(classMatch_1, @class_1),
+				MatchAndReplacer.GetMatchAndReplacers(namespaceMatch_1, namespace_1),
+				MatchAndReplacer.GetMatchAndReplacers(classMatch_1, class_1),
 				MatchAndReplacer.GetMatchAndReplacers(hStateMatch_1, hStateName_1),
 				MatchAndReplacer.GetMatchAndReplacers(lStateMatch_1, lStateName_1)
 			);
@@ -223,18 +243,55 @@ namespace Com.Github.Knose1.Flow.Editor.Generate
 			data.GetNodes(out List<NodeData> nodes);
 			int stateNodesCount = stateNodes.Count;
 
-			void LGetStateData(StateNodeData state, out string @namespace, out string @class, out string hStateName, out string lStateName)
+			void LGetStateData(StateNodeData state, out GeneratePosition generatePosition, out string stateNamespace, out string stateClass, out string hStateName, out string lStateName)
 			{
+				switch (state.executionMode)
+				{
+					case StateNodeData.Execution.Instantiate:
+						generatePosition = dataTemplate.GoState;
+						break;
+					case StateNodeData.Execution.Constructor:
+						generatePosition = dataTemplate.ClassMachineState;
+						break;
+					case StateNodeData.Execution.Event:
+						generatePosition = dataTemplate.EventState;
+						break;
+					case StateNodeData.Execution.Empty:
+						generatePosition = dataTemplate.EmptyState;
+						break;
+					case StateNodeData.Execution.SubState:
+						generatePosition = dataTemplate.SubstateMachine;
+						break;
+					default:
+						generatePosition = new GeneratePosition();
+						break;
+				}
+
 				//Higher CamelCase
-				hStateName = state.name;
-				hStateName = hStateName.ToUpperCamelCase();
+				string name = state.name + generatePosition.NAME_SUFFIX;
+				hStateName = name;
+				hStateName = StringHelper.ToUpperCamelCase(hStateName);
 
 				//Lower camelCase
-				lStateName = state.name;
-				lStateName = lStateName.ToLowerCamelCase();
+				lStateName = name;
+				lStateName = StringHelper.ToLowerCamelCase(lStateName);
 
-				@namespace = state.@namespace;
-				@class = state.@class;
+				stateNamespace = state.stateNamespace;
+				stateClass = state.stateClass;
+
+				if (state.executionMode == StateNodeData.Execution.SubState)
+				{
+					try
+					{
+						stateClass = state.subState.EntryNode.stateClass;
+						stateNamespace = state.subState.EntryNode.stateNamespace;
+					}
+					catch (Exception)
+					{
+						stateClass = "";
+						stateNamespace = "";
+					}
+				}
 			}
 
 			void LGetPortDatas(StateNodeData.StateNodePort port, out string trigger, out string createThread)
@@ -243,13 +300,14 @@ namespace Com.Github.Knose1.Flow.Editor.Generate
 				createThread = BoolToString(port.createThread);
 			}
 
-			//Iterate on each node to generate the node
+
+			List<FlowGraphScriptable> subStates = new List<FlowGraphScriptable>();
 			for (int i = 0; i < stateNodesCount; i++)
 			{
 				StateNodeData state = stateNodes[i];
 				int portCount = state.ports.Count;
 
-				LGetStateData(state, out string @namespace, out string @class, out string hStateName, out string lStateName);
+				LGetStateData(state, out GeneratePosition generatePos, out string stateNamespace, out string stateClass, out string hStateName, out string lStateName);
 
 				/// <summary>
 				/// Add states in the different List<string> (see at top of the function)
@@ -258,25 +316,25 @@ namespace Com.Github.Knose1.Flow.Editor.Generate
 				{
 					if (executionType == StateNodeData.Execution.Event) generateEvent = true;
 
-					states.Add(ReplaceJsonDataTemplate(generatePosition.STATES, @namespace, @class, hStateName, lStateName, UNDEFINED, UNDEFINED));
-					createStates.Add(ReplaceJsonDataTemplate(generatePosition.CREATE_STATES, @namespace, @class, hStateName, lStateName, UNDEFINED, UNDEFINED));
+					states.Add(ReplaceJsonDataTemplate(generatePosition.STATES, stateNamespace, stateClass, hStateName, lStateName, UNDEFINED, UNDEFINED));
+					createStates.Add(ReplaceJsonDataTemplate(generatePosition.CREATE_STATES, stateNamespace, stateClass, hStateName, lStateName, UNDEFINED, UNDEFINED));
 
 					if (generateEvent)
 					{
-						events.Add(ReplaceJsonDataTemplate(generatePosition.EVENTS, @namespace, @class, hStateName, lStateName, UNDEFINED, UNDEFINED));
-						addEvents.Add(ReplaceJsonDataTemplate(dataTemplate.ADD_EVENTS, @namespace, @class, hStateName, lStateName, UNDEFINED, UNDEFINED));
+						events.Add(ReplaceJsonDataTemplate(generatePosition.EVENTS, stateNamespace, stateClass, hStateName, lStateName, UNDEFINED, UNDEFINED));
+						addEvents.Add(ReplaceJsonDataTemplate(dataTemplate.ADD_EVENTS, stateNamespace, stateClass, hStateName, lStateName, UNDEFINED, UNDEFINED));
 					}
 
 					switch (executionType)
 					{
 						case StateNodeData.Execution.Instantiate:
-							goFields.Add(ReplaceJsonDataTemplate(generatePosition.GO_FIELDS, @namespace, @class, hStateName, lStateName, UNDEFINED, UNDEFINED));
+							goFields.Add(ReplaceJsonDataTemplate(generatePosition.GO_FIELDS, stateNamespace, stateClass, hStateName, lStateName, UNDEFINED, UNDEFINED));
 							break;
 						case StateNodeData.Execution.Constructor:
-							classFields.Add(ReplaceJsonDataTemplate(generatePosition.CLASS_FIELDS, @namespace, @class, hStateName, lStateName, UNDEFINED, UNDEFINED));
+							classFields.Add(ReplaceJsonDataTemplate(generatePosition.CLASS_FIELDS, stateNamespace, stateClass, hStateName, lStateName, UNDEFINED, UNDEFINED));
 							break;
 						case StateNodeData.Execution.SubState:
-							subStateFields.Add(ReplaceJsonDataTemplate(generatePosition.SUBSTATE_FIELDS, @namespace, @class, hStateName, lStateName, UNDEFINED, UNDEFINED));
+							subStateFields.Add(ReplaceJsonDataTemplate(generatePosition.SUBSTATE_FIELDS, stateNamespace, stateClass, hStateName, lStateName, UNDEFINED, UNDEFINED));
 							break;
 					}
 				}
@@ -284,7 +342,7 @@ namespace Com.Github.Knose1.Flow.Editor.Generate
 				switch (state.executionMode)
 				{
 					case StateNodeData.Execution.Instantiate:
-						LAddState(dataTemplate.GoState, state.executionMode, state.generateEvent);
+						LAddState(generatePos, state.executionMode, state.generateEvent);
 						break;
 					case StateNodeData.Execution.Constructor:
 						LAddState(dataTemplate.ClassMachineState, state.executionMode, state.generateEvent);
@@ -296,8 +354,13 @@ namespace Com.Github.Knose1.Flow.Editor.Generate
 						LAddState(dataTemplate.EmptyState, state.executionMode, false);
 						break;
 					case StateNodeData.Execution.SubState:
+
+						FlowGraphScriptable subState = state.subState;
+						if (subState == null) continue;
+
+						if (!subStates.Contains(subState)) subStates.Add(subState);
+
 						LAddState(dataTemplate.SubstateMachine, state.executionMode, false);
-						subStateClass.Add(Generate(substateTemplate, substateTemplate, dataTemplate, state.subState.nodes));
 						break;
 				}
 
@@ -310,7 +373,7 @@ namespace Com.Github.Knose1.Flow.Editor.Generate
 					StateNodeData.StateNodePort stateNodeOutputPort = state.ports[j];
 
 					LGetPortDatas(stateNodeOutputPort, out string trigger, out string createThread);
-					allowTriggers.Add(ReplaceJsonDataTemplate(dataTemplate.ALLOW_TRIGGERS, @namespace, @class, hStateName, lStateName, trigger, createThread));
+					allowTriggers.Add(ReplaceJsonDataTemplate(dataTemplate.ALLOW_TRIGGERS, stateNamespace, stateClass, hStateName, lStateName, trigger, createThread));
 
 					List<ConnectorData> connections = data.FindOutputNode(state, stateNodeOutputPort); //Find each connection linked to the output port
 					int connectionCount = connections.Count;
@@ -346,7 +409,7 @@ namespace Com.Github.Knose1.Flow.Editor.Generate
 									break;
 							}
 
-							addTriggers.Add(ReplaceJsonDataTemplate(jsonDataTemplate, @namespace, @class, hStateName, lStateName, trigger, FALSE));
+							addTriggers.Add(ReplaceJsonDataTemplate(jsonDataTemplate, stateNamespace, stateClass, hStateName, lStateName, trigger, FALSE));
 							continue;
 						}
 
@@ -355,12 +418,12 @@ namespace Com.Github.Knose1.Flow.Editor.Generate
 							//If state, generate state
 							StateNodeData state_1 = otherNode as StateNodeData;
 
-							LGetStateData(state_1, out string @namespace_1, out string @class_1, out string hStateName_1, out string lStateName_1);
+							LGetStateData(state_1, out _, out string namespace_1, out string class_1, out string hStateName_1, out string lStateName_1);
 
 							addTriggers.Add(
 								ReplaceJsonDataTemplateMultiple(dataTemplate.ADD_TRIGGERS,
-									@namespace, @class, hStateName, lStateName, trigger, createThread,
-									@namespace_1, @class_1, hStateName_1, lStateName_1
+									stateNamespace, stateClass, hStateName, lStateName, trigger, createThread,
+									namespace_1, class_1, hStateName_1, lStateName_1
 								)
 							);
 						}
@@ -373,8 +436,8 @@ namespace Com.Github.Knose1.Flow.Editor.Generate
 
 			}
 
-			string entryNamespace = data.entryNode.@namespace;
-			string entryClass = data.entryNode.@class;
+			string entryNamespace = data.entryNode.stateNamespace;
+			string entryClass = data.entryNode.stateClass;
 
 			NodeData output = data.entryNode.GetFirstNode(data);
 			string entryState = "";
@@ -382,13 +445,18 @@ namespace Com.Github.Knose1.Flow.Editor.Generate
 			{
 				if (output is StateNodeData)
 				{
-					LGetStateData(output as StateNodeData, out string @namespace_1, out string @class_1, out string hStateName_1, out string lStateName_1);
+					LGetStateData(output as StateNodeData, out _, out string namespace_1, out string class_1, out string hStateName_1, out string lStateName_1);
 					entryState = ReplaceJsonDataTemplate(dataTemplate.ENTRY_STATE, UNDEFINED, UNDEFINED, hStateName_1, lStateName_1, UNDEFINED, FALSE);
 				}
 				else if (output is ExitNodeData)
 					entryState = ReplaceJsonDataTemplate(dataTemplate.ENTRY_STATE, UNDEFINED, UNDEFINED, StateMachine.Machine.END_STATE, StateMachine.Machine.END_STATE, UNDEFINED, FALSE);
 			}
 
+			foreach (var item in subStates)
+			{
+				if (subStateClass == null) continue;
+				subStateClass.Add(Generate(substateTemplate, substateTemplate, dataTemplate, item.nodes));
+			}
 
 			MatchCollection namespaceMatch      = NAMESPACE_REGEX.Matches(template);
 			MatchCollection classMatch          = CLASS_REGEX.Matches(template);
@@ -425,17 +493,17 @@ namespace Com.Github.Knose1.Flow.Editor.Generate
 			List<MatchAndReplacer> replacers = MatchAndReplacer.JoinMultiple(
 					MatchAndReplacer.GetMatchAndReplacers(namespaceMatch, entryNamespace),
 					MatchAndReplacer.GetMatchAndReplacers(classMatch, entryClass),
-					MatchAndReplacer.GetMatchAndReplacers(eventsMatch, LJoin(events, CRLF)),
-					MatchAndReplacer.GetMatchAndReplacers(goFieldsMatch, LJoin(goFields, CRLF)),
-					MatchAndReplacer.GetMatchAndReplacers(classFieldsMatch, LJoin(classFields, CRLF)),
-					MatchAndReplacer.GetMatchAndReplacers(substateFieldsMatch, LJoin(subStateFields, CRLF)),
-					MatchAndReplacer.GetMatchAndReplacers(statesMatch, LJoin(states, CRLF)),
-					MatchAndReplacer.GetMatchAndReplacers(createStatesMatch, LJoin(createStates, CRLF)),
-					MatchAndReplacer.GetMatchAndReplacers(allowTriggersMatch, LJoin(allowTriggers, CRLF)),
-					MatchAndReplacer.GetMatchAndReplacers(addTriggersMatch, LJoin(addTriggers, CRLF)),
-					MatchAndReplacer.GetMatchAndReplacers(addEventsMatch, LJoin(addEvents, CRLF)),
+					MatchAndReplacer.GetMatchAndReplacers(eventsMatch, LJoin(events, LineEnding)),
+					MatchAndReplacer.GetMatchAndReplacers(goFieldsMatch, LJoin(goFields, LineEnding)),
+					MatchAndReplacer.GetMatchAndReplacers(classFieldsMatch, LJoin(classFields, LineEnding)),
+					MatchAndReplacer.GetMatchAndReplacers(substateFieldsMatch, LJoin(subStateFields, LineEnding)),
+					MatchAndReplacer.GetMatchAndReplacers(statesMatch, LJoin(states, LineEnding)),
+					MatchAndReplacer.GetMatchAndReplacers(createStatesMatch, LJoin(createStates, LineEnding)),
+					MatchAndReplacer.GetMatchAndReplacers(allowTriggersMatch, LJoin(allowTriggers, LineEnding)),
+					MatchAndReplacer.GetMatchAndReplacers(addTriggersMatch, LJoin(addTriggers, LineEnding)),
+					MatchAndReplacer.GetMatchAndReplacers(addEventsMatch, LJoin(addEvents, LineEnding)),
 					MatchAndReplacer.GetMatchAndReplacers(entryStateMatch, entryState),
-					MatchAndReplacer.GetMatchAndReplacers(substateClassMatch, LJoin(subStateClass, CRLF))
+					MatchAndReplacer.GetMatchAndReplacers(substateClassMatch, LJoin(subStateClass, LineEnding))
 				);
 
 			replacers.Sort((MatchAndReplacer a, MatchAndReplacer b) =>

@@ -12,17 +12,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 514937b7f687f3b4996934d27f571918, type: 3}
   m_Name: BulletTestAbstract
   m_EditorClassIdentifier: 
+  parents: []
   nodes:
     entryNode:
       position: {x: -468, y: 133}
       _isNotNull: 1
-      namespace: Com.Github.Knose1.Flow.Example.BulletExample
-      class: BulletTestAbstract
+      stateNamespace: Com.Github.Knose1.Flow.Example.BulletExample
+      stateClass: BulletTestAbstract
     exitNode:
     - position: {x: 1137, y: 475}
       _isNotNull: 1
       exitType: 1
-    - position: {x: 3477, y: -171}
+    - position: {x: 3860, y: -306}
+      _isNotNull: 1
+      exitType: 0
+    - position: {x: 3846, y: -145}
       _isNotNull: 1
       exitType: 0
     stateNodes:
@@ -30,33 +34,35 @@ MonoBehaviour:
       _isNotNull: 1
       name: Timer
       executionMode: 1
-      namespace: Com.Github.Knose1.Flow.Example.BulletExample
-      class: Timer
+      stateNamespace: Com.Github.Knose1.Flow.Example.BulletExample
+      stateClass: Timer
       generateEvent: 0
       ports:
-      - trigger: Exit
+      - trigger: End
         createThread: 0
         id: 1
-    - position: {x: 2250, y: -142}
+      subState: {fileID: 0}
+    - position: {x: 1024, y: -60}
       _isNotNull: 1
-      name: Empty1
-      executionMode: 3
-      namespace: 
-      class: 
+      name: One
+      executionMode: 1
+      stateNamespace: Com.Github.Knose1.Flow.Example.BulletExample
+      stateClass: One
       generateEvent: 0
       ports:
-      - trigger: 
-        createThread: 1
+      - trigger: Time
+        createThread: 0
         id: 1
-      - trigger: 
+      - trigger: Time2
         createThread: 0
         id: 2
+      subState: {fileID: 0}
     - position: {x: -6, y: 93}
       _isNotNull: 1
       name: Start
       executionMode: 2
-      namespace: 
-      class: 
+      stateNamespace: 
+      stateClass: 
       generateEvent: 1
       ports:
       - trigger: 
@@ -65,83 +71,98 @@ MonoBehaviour:
       - trigger: 
         createThread: 0
         id: 2
-    - position: {x: 1024, y: -60}
-      _isNotNull: 1
-      name: One
-      executionMode: 1
-      namespace: Com.Github.Knose1.Flow.Example.BulletExample
-      class: One
-      generateEvent: 0
-      ports:
-      - trigger: Time
-        createThread: 0
-        id: 1
-      - trigger: Time2
-        createThread: 0
-        id: 2
+      subState: {fileID: 0}
     - position: {x: 1665, y: -56}
       _isNotNull: 1
       name: Two
       executionMode: 1
-      namespace: Com.Github.Knose1.Flow.Example.BulletExample
-      class: Two
+      stateNamespace: Com.Github.Knose1.Flow.Example.BulletExample
+      stateClass: Two
       generateEvent: 0
       ports:
       - trigger: Time
         createThread: 0
         id: 1
-    - position: {x: 2801, y: -216}
+      subState: {fileID: 0}
+    - position: {x: 2198, y: -31}
+      _isNotNull: 1
+      name: Empty1
+      executionMode: 3
+      stateNamespace: 
+      stateClass: 
+      generateEvent: 0
+      ports:
+      - trigger: Time3
+        createThread: 0
+        id: 1
+      subState: {fileID: 0}
+    - position: {x: 3261, y: -309}
       _isNotNull: 1
       name: One1
       executionMode: 1
-      namespace: Com.Github.Knose1.Flow.Example.BulletExample
-      class: One
+      stateNamespace: Com.Github.Knose1.Flow.Example.BulletExample
+      stateClass: One
       generateEvent: 0
       ports:
-      - trigger: Time
+      - trigger: 
         createThread: 0
         id: 1
-    - position: {x: 2798, y: 38}
+      subState: {fileID: 0}
+    - position: {x: 3272, y: -137}
       _isNotNull: 1
       name: Two1
       executionMode: 1
-      namespace: Com.Github.Knose1.Flow.Example.BulletExample
-      class: Two
+      stateNamespace: Com.Github.Knose1.Flow.Example.BulletExample
+      stateClass: Two
       generateEvent: 0
       ports:
-      - trigger: Time
+      - trigger: 
         createThread: 0
         id: 1
-      - trigger: Time2
-        createThread: 0
-        id: 2
-    - position: {x: 3349, y: 139}
+      subState: {fileID: 0}
+    - position: {x: 3276, y: 57}
       _isNotNull: 1
-      name: State
+      name: Wait
       executionMode: 3
-      namespace: 
-      class: 
+      stateNamespace: 
+      stateClass: 
+      generateEvent: 0
+      ports:
+      - trigger: Time3
+        createThread: 0
+        id: 1
+      subState: {fileID: 0}
+    - position: {x: 2665, y: -189}
+      _isNotNull: 1
+      name: Empty2
+      executionMode: 3
+      stateNamespace: 
+      stateClass: 
       generateEvent: 0
       ports:
       - trigger: Time2
-        createThread: 0
+        createThread: 1
         id: 1
-    reroute:
-    - position: {x: 912, y: -130}
+      - trigger: Time
+        createThread: 1
+        id: 2
+      - trigger: Time5
+        createThread: 0
+        id: 3
+      subState: {fileID: 0}
+    reroutes:
+    - position: {x: 1555, y: -102}
       _isNotNull: 1
-    - position: {x: 911, y: 256}
+    - position: {x: 920, y: 316}
       _isNotNull: 1
-    - position: {x: 1562, y: -151}
+    - position: {x: 920, y: -102}
       _isNotNull: 1
-    - position: {x: 2693, y: 10}
+    - position: {x: 3719, y: 310}
       _isNotNull: 1
-    - position: {x: 3329, y: 6}
-      _isNotNull: 1
-    - position: {x: 3816, y: 284}
-      _isNotNull: 1
+    subStates: []
     connections:
     - input:
-        nodeId: 5
+        nodeId: 6
         portId: 0
       output:
         nodeId: 0
@@ -150,107 +171,101 @@ MonoBehaviour:
         nodeId: 1
         portId: 0
       output:
-        nodeId: 3
+        nodeId: 4
+        portId: 1
+    - input:
+        nodeId: 4
+        portId: 0
+      output:
+        nodeId: 6
+        portId: 2
+    - input:
+        nodeId: 5
+        portId: 0
+      output:
+        nodeId: 14
+        portId: 1
+    - input:
+        nodeId: 5
+        portId: 0
+      output:
+        nodeId: 15
+        portId: 1
+    - input:
+        nodeId: 5
+        portId: 0
+      output:
+        nodeId: 6
+        portId: 1
+    - input:
+        nodeId: 13
+        portId: 0
+      output:
+        nodeId: 5
+        portId: 1
+    - input:
+        nodeId: 7
+        portId: 0
+      output:
+        nodeId: 5
+        portId: 2
+    - input:
+        nodeId: 8
+        portId: 0
+      output:
+        nodeId: 7
+        portId: 1
+    - input:
+        nodeId: 12
+        portId: 0
+      output:
+        nodeId: 8
+        portId: 1
+    - input:
+        nodeId: 9
+        portId: 0
+      output:
+        nodeId: 12
         portId: 1
     - input:
         nodeId: 2
         portId: 0
       output:
-        nodeId: 8
+        nodeId: 9
         portId: 1
     - input:
         nodeId: 3
         portId: 0
       output:
-        nodeId: 5
-        portId: 2
-    - input:
-        nodeId: 4
-        portId: 0
-      output:
-        nodeId: 7
-        portId: 1
-    - input:
-        nodeId: 8
-        portId: 0
-      output:
-        nodeId: 4
-        portId: 1
-    - input:
-        nodeId: 9
-        portId: 0
-      output:
-        nodeId: 4
-        portId: 2
-    - input:
-        nodeId: 6
-        portId: 0
-      output:
-        nodeId: 5
-        portId: 1
-    - input:
-        nodeId: 6
-        portId: 0
-      output:
-        nodeId: 11
-        portId: 1
-    - input:
-        nodeId: 6
-        portId: 0
-      output:
-        nodeId: 12
-        portId: 1
-    - input:
-        nodeId: 13
-        portId: 0
-      output:
-        nodeId: 6
-        portId: 1
-    - input:
-        nodeId: 7
-        portId: 0
-      output:
-        nodeId: 6
-        portId: 2
-    - input:
-        nodeId: 9
-        portId: 0
-      output:
-        nodeId: 14
-        portId: 1
-    - input:
-        nodeId: 15
-        portId: 0
-      output:
-        nodeId: 9
+        nodeId: 10
         portId: 1
     - input:
         nodeId: 10
         portId: 0
       output:
-        nodeId: 9
+        nodeId: 12
         portId: 2
+    - input:
+        nodeId: 11
+        portId: 0
+      output:
+        nodeId: 12
+        portId: 3
     - input:
         nodeId: 16
         portId: 0
       output:
-        nodeId: 10
+        nodeId: 11
         portId: 1
     - input:
-        nodeId: 11
+        nodeId: 15
         portId: 0
       output:
         nodeId: 13
         portId: 1
     - input:
-        nodeId: 12
-        portId: 0
-      output:
-        nodeId: 16
-        portId: 1
-    - input:
         nodeId: 14
         portId: 0
       output:
-        nodeId: 15
+        nodeId: 16
         portId: 1

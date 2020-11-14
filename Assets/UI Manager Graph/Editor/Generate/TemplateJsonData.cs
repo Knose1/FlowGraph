@@ -9,6 +9,7 @@
 		public string SUBSTATE_FIELDS;
 		public string STATES;
 		public string CREATE_STATES;
+		public string NAME_SUFFIX;
 	}
 
 	[System.Serializable]

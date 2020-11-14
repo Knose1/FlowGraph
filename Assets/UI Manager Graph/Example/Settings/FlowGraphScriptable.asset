@@ -12,12 +12,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 514937b7f687f3b4996934d27f571918, type: 3}
   m_Name: FlowGraphScriptable
   m_EditorClassIdentifier: 
+  parents: []
   nodes:
     entryNode:
       position: {x: -213, y: -92}
       _isNotNull: 1
-      namespace: Com.Github.Knose1.Flow.Example
-      class: UIManagerGenerated
+      stateNamespace: Com.Github.Knose1.Flow.Example
+      stateClass: UIManagerGenerated
     exitNode:
     - position: {x: 1546, y: 50}
       _isNotNull: 1
@@ -27,19 +28,20 @@ MonoBehaviour:
       _isNotNull: 1
       name: Titlecard
       executionMode: 0
-      namespace: 
-      class: 
+      stateNamespace: 
+      stateClass: 
       generateEvent: 0
       ports:
       - trigger: 
         createThread: 0
         id: 1
+      subState: {fileID: 0}
     - position: {x: 603, y: -129}
       _isNotNull: 1
       name: Menu
       executionMode: 1
-      namespace: Com.Github.Knose1.Flow.Example
-      class: Menu
+      stateNamespace: Com.Github.Knose1.Flow.Example
+      stateClass: Menu
       generateEvent: 1
       ports:
       - trigger: StartGame
@@ -48,22 +50,25 @@ MonoBehaviour:
       - trigger: Exit
         createThread: 0
         id: 2
+      subState: {fileID: 0}
     - position: {x: 1158, y: -95}
       _isNotNull: 1
       name: StartGame
       executionMode: 2
-      namespace: 
-      class: 
+      stateNamespace: 
+      stateClass: 
       generateEvent: 0
       ports:
       - trigger: GameEnd
         createThread: 0
         id: 1
-    reroute:
-    - position: {x: 502, y: -236}
+      subState: {fileID: 0}
+    reroutes:
+    - position: {x: 517, y: -187}
       _isNotNull: 1
-    - position: {x: 1642, y: -242}
+    - position: {x: 1606, y: -209}
       _isNotNull: 1
+    subStates: []
     connections:
     - input:
         nodeId: 2
