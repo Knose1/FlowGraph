@@ -109,6 +109,7 @@ namespace Com.Github.Knose1.Flow.Editor
 				return;
 			}
 
+			_target.nodes.AskForReloadList();
 			string classTemplate = AssetDatabase.LoadAssetAtPath<TextAsset>(FlowGraphAssetDatabase.CLASS_TEMPLATE).text;
 			string substateClassTemplate = AssetDatabase.LoadAssetAtPath<TextAsset>(FlowGraphAssetDatabase.SUBSTATE_CLASS_TEMPLATE).text;
 			string argsTemplate = AssetDatabase.LoadAssetAtPath<TextAsset>(FlowGraphAssetDatabase.ARGS_TEMPLATE).text;

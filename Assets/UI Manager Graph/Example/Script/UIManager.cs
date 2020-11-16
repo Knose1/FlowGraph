@@ -35,7 +35,8 @@ namespace Com.Github.Knose1.Flow.Example
 			titlecardState = new GameObjectMachineState("Titlecard",titlecard);
 			menuState = new ClassMachineState("Menu", menu);
 			startGameState = new MachineState("StartGame");
-			testSubstate = new SubstateMachine("Test", testSubMachine = new TestMachine(this));
+			testSubstate = new SubstateMachine("Test", testSubMachine = new TestMachine((StateMachine)this, (Machine)this));
+			testSubstate.nextMachine = startGameState;
 
 			AllowTrigger("CountDown");
 			AllowTrigger("StartGame");
@@ -55,7 +56,7 @@ namespace Com.Github.Knose1.Flow.Example
 
 		public class TestMachine : Machine
 		{
-			public TestMachine(StateMachine stateMachine) : base(stateMachine){}
+			public TestMachine(StateMachine stateMachine, Machine machine) : base(stateMachine, machine){}
 
 			protected override void EntryPoint(Thread mainThread) => throw new NotImplementedException();
 		}

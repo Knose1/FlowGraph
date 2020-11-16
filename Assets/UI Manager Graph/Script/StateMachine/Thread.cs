@@ -27,11 +27,12 @@ namespace Com.Github.Knose1.Flow.Engine.Machine
 		{
 			get
 			{
-				if (currentState == null) return new List<TriggerData>();
-				return currentState.triggers;
+				if (_currentState == null) return new List<TriggerData>();
+				return _currentState.triggers;
 			}
 		}
-		protected MachineState currentState;
+		protected MachineState _currentState;
+		public MachineState CurrentState => _currentState;
 		protected MachineState nextState;
 		private bool isDead = false;
 		private bool isChecked = false;
@@ -75,17 +76,17 @@ namespace Com.Github.Knose1.Flow.Engine.Machine
 
 			if (nextState != null)
 			{
-				State.MachineState oldCurrentState = currentState;
+				State.MachineState oldCurrentState = _currentState;
 				OnNewState();
 				if (isDead) return;
 
 				if (oldCurrentState != null) CheckForTriggersInCurrentState();
 			}
-			else if (!isChecked && currentState != null)
+			else if (!isChecked && _currentState != null)
 			{
 				CheckForTriggersInCurrentState();
 			}
-			currentState?.Update(this);
+			_currentState?.Update(this);
 		}
 
 		/// <summary>
@@ -96,18 +97,18 @@ namespace Com.Github.Knose1.Flow.Engine.Machine
 		{
 			isChecked = false;
 
-			currentState?.End(this);
-			currentState = nextState;
+			_currentState?.End(this);
+			_currentState = nextState;
 
 #if UNITY_EDITOR || DEVELOPEMENT_BUILD
 			if (_Machine.IsDebug)
-				Debug.Log(_Machine.DebugTag + " New state \"" + currentState.name + "\" on thread, id : " + _id);
+				Debug.Log(_Machine.DebugTag + " New state \"" + _currentState.name + "\" on thread, id : " + _id);
 #endif
 
-			currentState.Start(this);
+			_currentState.Start(this);
 			nextState = null;
 
-			OnChange?.Invoke(this, currentState);
+			OnChange?.Invoke(this, _currentState);
 
 			if (isDead) return;
 
@@ -117,8 +118,8 @@ namespace Com.Github.Knose1.Flow.Engine.Machine
 		public void Die()
 		{
 			isDead = true;
-			currentState?.End(this);
-			currentState = null;
+			_currentState?.End(this);
+			_currentState = null;
 			nextState = null;
 			OnDie?.Invoke(this);
 			OnDie = null;

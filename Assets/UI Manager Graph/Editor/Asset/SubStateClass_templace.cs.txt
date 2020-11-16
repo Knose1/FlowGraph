@@ -17,7 +17,7 @@
 		
 		#{STATES}#
 		
-		public #{CLASS}#Machine(StateMachine stateMachine) : base(stateMachine){}
+		public #{CLASS}#Machine(StateMachine stateMachine, Machine machine) : base(stateMachine, machine){}
 
 		protected override void SetupMachine()
 		{
@@ -36,6 +36,4 @@
 		
 		
 	}
-	
-	#{SUBSTATE_CLASS}#
 }

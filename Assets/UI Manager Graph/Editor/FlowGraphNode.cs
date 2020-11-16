@@ -97,16 +97,20 @@ namespace Com.Github.Knose1.Flow.Editor
 		protected Port GeneratePort(Direction direction, Port.Capacity capacity = Port.Capacity.Single)
 		{
 			Port port = InstantiatePort(Orientation.Horizontal, direction, capacity, null);
-			port.RegisterCallback<MouseDownEvent>(OnMouseDown);
-			_ports.Add(port);
+			AddPort(port);
 			return port;
 		}
 
 		protected Port GeneratePort<T>(Direction direction, Port.Capacity capacity = Port.Capacity.Single)
 		{
 			Port port = InstantiatePort(Orientation.Horizontal, direction, capacity, typeof(T));
-			_ports.Add(port);
+			AddPort(port);
 			return port;
+		}
+
+		protected void InsertOutputElement(VisualElement elm, int index)
+		{
+			outputContainer.Insert(index, elm);
 		}
 
 		protected void AddOutputElement(VisualElement elm)
@@ -120,6 +124,11 @@ namespace Com.Github.Knose1.Flow.Editor
 			outputContainer.Remove(elm);
 		}
 
+		protected void InsertInputElement(VisualElement elm, int index)
+		{
+			inputContainer.Insert(index, elm);
+		}
+
 		protected void AddInputElement(VisualElement elm)
 		{
 			inputContainer.Add(elm);
@@ -130,7 +139,19 @@ namespace Com.Github.Knose1.Flow.Editor
 			inputContainer.Remove(elm);
 		}
 
-		protected void RemovePort(Port port)
+		protected void InsertPort(Port port, int index)
+		{
+			port.RegisterCallback<MouseDownEvent>(OnMouseDown);
+			_ports.Insert(index, port);
+		}
+
+		protected void AddPort(Port port)
+		{
+			port.RegisterCallback<MouseDownEvent>(OnMouseDown);
+			_ports.Add(port);
+		}
+
+		protected void RemovePort(Port port, bool callChange = true)
 		{
 			_ports.Remove(port);
 			port.UnregisterCallback<MouseDownEvent>(OnMouseDown);
@@ -140,11 +161,12 @@ namespace Com.Github.Knose1.Flow.Editor
 			for (int i = connections.Count - 1; i >= 0; i--)
 			{
 				Edge edge = connections[i];
-				port.Disconnect(edge);
+				edge.input.Disconnect(edge);
+				edge.output.Disconnect(edge);
 				edge.RemoveFromHierarchy();
 			}
 
-			OnChange?.Invoke();
+			if (callChange) OnChange?.Invoke();
 		}
 
 		protected void AddInspectorElement(VisualElement elm)

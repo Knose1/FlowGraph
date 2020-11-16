@@ -133,6 +133,8 @@ namespace Com.Github.Knose1.Flow.Engine.Machine.State
 
 	public class SubstateMachine : ClassMachineStateBase<StateMachine.Machine>
 	{
+		public MachineState nextMachine;
+
 		public SubstateMachine(string name, StateMachine.Machine machine) : base(name, machine)
 		{
 			machine.OnMachineStop += Machine_OnMachineStop;
@@ -141,7 +143,7 @@ namespace Com.Github.Knose1.Flow.Engine.Machine.State
 		private void Machine_OnMachineStop()
 		{
 			target.OnMachineStop -= Machine_OnMachineStop;
-			Thread.Machine.SetTrigger(StateMachine.Machine.SUB_MACHINE_END, false);
+			if (nextMachine != null) Thread.SetState(nextMachine);
 		}
 	}
 }

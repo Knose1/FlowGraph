@@ -18,6 +18,7 @@ namespace Com.Github.Knose1.Flow.Editor.Node
 		//              Local Class              //
 		//                                       //
 		//*/////////////////////////////////////*//
+		
 		public class StateOutputPort : GraphElement, IDisposable
 		{
 			private static List<StateOutputPort> _list = new List<StateOutputPort>();
@@ -277,6 +278,7 @@ namespace Com.Github.Knose1.Flow.Editor.Node
 		//                 Const                 //
 		//                                       //
 		//*/////////////////////////////////////*//
+		protected const string SUB_STATE_END = "SubStateEnd";
 		protected const string STATE = "State";
 		protected Color INSTANTIATE_COLOR = Color.cyan;
 		protected Color CONSTRUCTOR_COLOR = new Color(0.6f, 1f,0.6f);
@@ -305,7 +307,7 @@ namespace Com.Github.Knose1.Flow.Editor.Node
 		//                                       //
 		//*/////////////////////////////////////*//
 		private List<StateOutputPort> stateOutputPorts = new List<StateOutputPort>();
-
+		private Port subMachineEndPort;
 
 		//*/////////////////////////////////////*//
 		//                                       //
@@ -391,6 +393,10 @@ namespace Com.Github.Knose1.Flow.Editor.Node
 			Port input = GeneratePort(Direction.Input, Port.Capacity.Multi);
 			input.SetPortName(PREVIOUS);
 			AddInputElement(input);
+
+			subMachineEndPort = GeneratePort(Direction.Output, Port.Capacity.Single);
+			subMachineEndPort.SetPortName(SUB_STATE_END);
+			subMachineEndPort.portColor = SUBSTATE_COLOR;
 		}
 
 		protected override void SetupFields()
@@ -513,7 +519,12 @@ namespace Com.Github.Knose1.Flow.Editor.Node
 		}
 
 		private void OnCreationModeFieldChange() => OnCreationModeFieldChange(ExecutionMode);
-		private void OnCreationModeFieldChange(ChangeEvent<Enum> evt) => OnCreationModeFieldChange((StateNodeData.Execution)evt.newValue);
+		private void OnCreationModeFieldChange(ChangeEvent<Enum> evt)
+		{
+			if (evt.newValue != evt.previousValue)
+				OnCreationModeFieldChange((StateNodeData.Execution)evt.newValue);
+		}
+
 		private void OnCreationModeFieldChange(StateNodeData.Execution creationMode)
 		{
 			RemoveInspectorElement(namespaceField);
@@ -522,6 +533,9 @@ namespace Com.Github.Knose1.Flow.Editor.Node
 			RemoveInspectorElement(flowGraphScriptableField);
 			RemoveInspectorElement(eventTextElement);
 			RemoveInspectorElement(generateEventField);
+
+			RemovePort(subMachineEndPort);
+			RemoveOutputElement(subMachineEndPort);
 
 			switch (creationMode)
 			{
@@ -555,6 +569,12 @@ namespace Com.Github.Knose1.Flow.Editor.Node
 				case StateNodeData.Execution.SubState:
 					AddInspectorElement(flowGraphScriptableField);
 					SetNodeColor(SUBSTATE_COLOR);
+
+					InsertPort(subMachineEndPort, 1);
+					InsertOutputElement(subMachineEndPort, 0);
+					RefreshExpandedState();
+					RefreshPorts();
+
 					return;
 				default: 
 					return;
@@ -670,9 +690,10 @@ namespace Com.Github.Knose1.Flow.Editor.Node
 
 		public void Dispose()
 		{
-			foreach (var item in stateOutputPorts)
+			for (int i = stateOutputPorts.Count - 1; i >= 0; i--)
 			{
-				item.Dispose();
+				stateOutputPorts[i].Dispose();
+
 			}
 
 			SubState = null;

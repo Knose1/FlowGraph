@@ -749,6 +749,16 @@ namespace Com.Github.Knose1.Flow.Editor
 				if (item is UnityEditor.Experimental.GraphView.Node)
 				{
 					RemoveNode(item as UnityEditor.Experimental.GraphView.Node);
+					continue;
+				}
+
+				if (item is Edge)
+				{
+					Edge e = (item as Edge);
+					e.input.Disconnect(e);
+					e.output.Disconnect(e);
+
+					DeleteElements(new List<Edge>(){ e });
 				}
 
 				if (item is GraphElement) RemoveElement(item as GraphElement);

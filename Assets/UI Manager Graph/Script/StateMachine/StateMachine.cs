@@ -9,6 +9,8 @@ namespace Com.Github.Knose1.Flow.Engine.Machine
 {
 	public abstract class StateMachine : MonoBehaviour
 	{
+		public static explicit operator Machine(StateMachine stateMachine) => stateMachine._mainMachine;
+
 		private LMainMachine _mainMachine;
 		public Machine MainMachine => _mainMachine;
 
@@ -74,6 +76,8 @@ namespace Com.Github.Knose1.Flow.Engine.Machine
 		/// </summary>
 		public abstract class Machine : IState, IStateEnd, IStateStart, IStateUpdate
 		{
+			public static explicit operator StateMachine(Machine machine) => machine.StateMachine;
+
 			/// <summary>
 			/// Called before the first thread is created
 			/// </summary>
@@ -86,7 +90,6 @@ namespace Com.Github.Knose1.Flow.Engine.Machine
 
 			public const string END_STATE = nameof(endState);
 			public const string STOP_STATE = nameof(stopState);
-			public const string SUB_MACHINE_END = "SubMachineEnd";
 
 			/// <summary>
 			/// List of allowed triggers
@@ -106,7 +109,7 @@ namespace Com.Github.Knose1.Flow.Engine.Machine
 			private StateMachine _stateMachine;
 			public StateMachine StateMachine => _stateMachine;
 
-			protected Machine(StateMachine stateMachine) => _stateMachine = stateMachine;
+			protected Machine(StateMachine stateMachine, Machine parent) => _stateMachine = stateMachine;
 
 			public Thread GetThreadById(int id)
 			{
@@ -165,7 +168,6 @@ namespace Com.Github.Knose1.Flow.Engine.Machine
 			protected virtual void SetupMachine()
 			{
 				AllowTrigger("");
-				AllowTrigger(SUB_MACHINE_END);
 			}
 
 			public virtual void StartMachine()
@@ -315,13 +317,16 @@ namespace Com.Github.Knose1.Flow.Engine.Machine
 			public void CheckForTrigger(Thread thread)
 			{
 				List<string> triggered = new List<string>();
-				int count = triggers.Count;
+				List<string> triggers = new List<string>(this.triggers);
+				int count = this.triggers.Count;
 				int i = 0;
 
 				bool createThread = false;
 
 				do
 				{
+					if (i >= count) continue;
+
 					string trigger = triggers[i++];
 					createThread = ExecuteTrigger(thread, trigger, out bool hasTrigger);
 					if (hasTrigger) triggered.Add(trigger);
@@ -374,7 +379,7 @@ namespace Com.Github.Knose1.Flow.Engine.Machine
 
 		internal class LMainMachine : Machine
 		{
-			public LMainMachine(StateMachine stateMachine) : base(stateMachine) { }
+			public LMainMachine(StateMachine stateMachine) : base(stateMachine, null) { }
 
 			public State.MachineState EndState => endState;
 			public State.MachineState StopState => stopState;

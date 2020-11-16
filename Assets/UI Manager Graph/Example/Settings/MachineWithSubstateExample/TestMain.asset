@@ -15,56 +15,38 @@ MonoBehaviour:
   parents: []
   nodes:
     entryNode:
-      position: {x: 96, y: 188}
+      position: {x: -219, y: 103}
       _isNotNull: 1
       stateNamespace: Com.Github.Knose1.Flow.Example.SubClass
-      stateClass: TestSubclass
+      stateClass: TestSubMachine
     exitNode:
-    - position: {x: 1954, y: 247}
+    - position: {x: 582, y: 247}
       _isNotNull: 1
       exitType: 0
     stateNodes:
-    - position: {x: 943, y: 249}
-      _isNotNull: 1
-      name: Hello
-      executionMode: 4
-      stateNamespace: 
-      stateClass: 
-      generateEvent: 0
-      ports:
-      - trigger: OwO
-        createThread: 0
-        id: 1
-      subState: {fileID: 11400000, guid: 57ded1b84bf2b874983c58a3d5a7ad3c, type: 2}
-    - position: {x: 1440, y: 241}
-      _isNotNull: 1
-      name: Exit
-      executionMode: 2
-      stateNamespace: 
-      stateClass: 
-      generateEvent: 0
-      ports:
-      - trigger: 
-        createThread: 0
-        id: 1
-      subState: {fileID: 0}
-    - position: {x: 468, y: 188}
+    - position: {x: 169, y: 76}
       _isNotNull: 1
       name: OwO
       executionMode: 4
       stateNamespace: 
       stateClass: 
       generateEvent: 0
-      ports:
-      - trigger: Test
-        createThread: 0
-        id: 1
+      ports: []
       subState: {fileID: 11400000, guid: 57ded1b84bf2b874983c58a3d5a7ad3c, type: 2}
+    - position: {x: 168, y: 216}
+      _isNotNull: 1
+      name: Hello
+      executionMode: 4
+      stateNamespace: 
+      stateClass: 
+      generateEvent: 0
+      ports: []
+      subState: {fileID: 11400000, guid: f471a4e92fd9f954a802463bb3070204, type: 2}
     reroutes: []
     subStates: []
     connections:
     - input:
-        nodeId: 4
+        nodeId: 2
         portId: 0
       output:
         nodeId: 0
@@ -74,12 +56,6 @@ MonoBehaviour:
         portId: 0
       output:
         nodeId: 3
-        portId: 1
-    - input:
-        nodeId: 2
-        portId: 0
-      output:
-        nodeId: 4
         portId: 1
     - input:
         nodeId: 3

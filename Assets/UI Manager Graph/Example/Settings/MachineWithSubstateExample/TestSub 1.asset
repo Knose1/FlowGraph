@@ -10,18 +10,21 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 514937b7f687f3b4996934d27f571918, type: 3}
-  m_Name: TestSub
+  m_Name: TestSub 1
   m_EditorClassIdentifier: 
   parents:
+  - {fileID: 11400000, guid: ff4c90430f7e25f4c99dfce2a5e0d4c8, type: 2}
+  - {fileID: 11400000, guid: 57ded1b84bf2b874983c58a3d5a7ad3c, type: 2}
+  - {fileID: 11400000, guid: ff4c90430f7e25f4c99dfce2a5e0d4c8, type: 2}
   - {fileID: 11400000, guid: ff4c90430f7e25f4c99dfce2a5e0d4c8, type: 2}
   nodes:
     entryNode:
       position: {x: 100, y: 200}
       _isNotNull: 1
       stateNamespace: Sub
-      stateClass: MySubClass
+      stateClass: OtherSub
     exitNode:
-    - position: {x: 1495, y: 189}
+    - position: {x: 1112, y: 215}
       _isNotNull: 1
       exitType: 1
     stateNodes:
@@ -37,15 +40,6 @@ MonoBehaviour:
         trigger: 
         createThread: 0
       subState: {fileID: 0}
-    - position: {x: 1076, y: 198}
-      _isNotNull: 1
-      name: YepAnotherSub
-      executionMode: 4
-      stateNamespace: 
-      stateClass: 
-      generateEvent: 0
-      ports: []
-      subState: {fileID: 11400000, guid: f471a4e92fd9f954a802463bb3070204, type: 2}
     reroutes: []
     subStates: []
     connections:
@@ -57,12 +51,6 @@ MonoBehaviour:
         portId: 0
     - input:
         nodeId: 1
-        portId: 0
-      output:
-        nodeId: 3
-        portId: 1
-    - input:
-        nodeId: 3
         portId: 0
       output:
         nodeId: 2

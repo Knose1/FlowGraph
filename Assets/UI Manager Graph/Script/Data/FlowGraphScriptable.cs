@@ -67,10 +67,30 @@ namespace Com.Github.Knose1.Flow.Engine.Settings
 			this.connections = connections;
 		}
 
-		public void AskForReloadList()
+		private void AskForReloadList(List<FlowGraphScriptable> not)
 		{
 			lastTimeChecked = 0;
 			isDataAdded = true;
+
+			List<FlowGraphScriptable> seen = new List<FlowGraphScriptable>();
+			List<StateNodeData> stateNodes = new List<StateNodeData>(this.stateNodes);
+			foreach (var item in stateNodes)
+			{
+				if (item.executionMode == StateNodeData.Execution.SubState)
+				{
+					FlowGraphScriptable subState = item.subState;
+					if (subState != null)
+					{
+						if (not.Contains(subState)) continue;
+						subState.nodes.AskForReloadList(seen);
+					}
+					
+				}
+			}
+		}
+		public void AskForReloadList()
+		{
+			AskForReloadList(new List<FlowGraphScriptable>());
 		}
 
 		/// <summary>
@@ -165,6 +185,18 @@ namespace Com.Github.Knose1.Flow.Engine.Settings
 			connections = new List<ConnectorData>();
 		}
 
+		public ConnectorData FindInputNode(NodeData.NodeData nodeData, int inputPortId)
+		{
+			List<ConnectorData> connectors = FindInputNode(nodeData);
+			for (int i = connectors.Count - 1; i >= 0; i--)
+			{
+				ConnectorData connector = connectors[i];
+				if (connector.input.portId == inputPortId) return connector;
+			}
+
+			return null;
+		}
+
 		public List<ConnectorData> FindInputNode(NodeData.NodeData nodeData)
 		{
 			List<ConnectorData> connections = this.connections;
@@ -178,7 +210,6 @@ namespace Com.Github.Knose1.Flow.Engine.Settings
 
 			return toRet;
 		}
-
 		public List<ConnectorData> FindOutputNode(NodeData.NodeData nodeData)
 		{
 			List<ConnectorData> connections = this.connections;
@@ -191,6 +222,17 @@ namespace Com.Github.Knose1.Flow.Engine.Settings
 			}
 
 			return toRet;
+		}
+		public ConnectorData FindOutputNode(NodeData.NodeData nodeData, int outputPortId)
+		{
+			List<ConnectorData> connectors = FindOutputNode(nodeData);
+			for (int i = connectors.Count - 1; i >= 0; i--)
+			{
+				ConnectorData connector = connectors[i];
+				if (connector.output.portId == outputPortId) return connector;
+			}
+
+			return null;
 		}
 
 		public List<ConnectorData> FindOutputNode(NodeData.StateNodeData nodeData, StateNodeData.StateNodePort port)
@@ -462,6 +504,11 @@ namespace Com.Github.Knose1.Flow.Engine.Settings.NodeData
 
 		public static bool operator ==(ConnectorData a, ConnectorData b)
 		{
+			if (b is null)
+			{
+				return a is null;
+			}
+
 			return (a.input == b.input && a.output == b.output) || (a.input == b.output && a.output == b.input);
 		}
 
@@ -549,7 +596,13 @@ namespace Com.Github.Knose1.Flow.Engine.Settings.NodeData
 
 			list.GetNodes(out List<NodeData> nodes);
 
-			return connectorData.input.GetNode(nodes);
+			NodeData node = connectorData.input.GetNode(nodes);
+			if (node is RerouteData)
+			{
+				node = (node as RerouteData).GetNextEffectNode(list);
+			}
+
+			return node;
 		}
 	}
 
@@ -609,9 +662,9 @@ namespace Com.Github.Knose1.Flow.Engine.Settings.NodeData
 		[Serializable]
 		public class StateNodePort
 		{
+			[SerializeField] public int id;
 			[SerializeField] public string trigger = "";
 			[SerializeField] public bool createThread = false;
-			[SerializeField] public int id;
 		}
 	}
 
