@@ -14,12 +14,6 @@ namespace Com.Github.Knose1.Flow.Example.SubClass
 	/// </summary>
 	public class TestSubMachine : StateMachine
 	{
-		
-
-		
-		
-		
-		
 		protected Sub.MySubClassMachine OwOSubMachine;
 		protected Sub.OtherSubMachine HelloSubMachine;
 		

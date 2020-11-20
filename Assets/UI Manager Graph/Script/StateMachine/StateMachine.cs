@@ -107,9 +107,16 @@ namespace Com.Github.Knose1.Flow.Engine.Machine
 			private List<Thread> threads;
 
 			private StateMachine _stateMachine;
+			private readonly Machine _parent;
+			public Machine Parent => _parent;
+
 			public StateMachine StateMachine => _stateMachine;
 
-			protected Machine(StateMachine stateMachine, Machine parent) => _stateMachine = stateMachine;
+			protected Machine(StateMachine stateMachine, Machine parent)
+			{
+				_stateMachine = stateMachine;
+				this._parent = parent;
+			}
 
 			public Thread GetThreadById(int id)
 			{

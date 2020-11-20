@@ -9,7 +9,15 @@ namespace Com.Github.Knose1.Flow.Example.SubClass
 	{
 		public void OnStart(Thread thread)
 		{
-			Debug.Log(thread.Machine.GetType().Name + ": " + thread.CurrentState.name);
+			StateMachine.Machine machine = thread.Machine;
+			StateMachine.Machine parent = machine.Parent;
+			string name = machine.GetType().Name;
+			if (parent != null)
+			{
+				name = parent.GetType().Name+" | "+name;
+				Debug.Log(name + ": " + thread.CurrentState.name);
+			}
+
 		}
 	}
 }

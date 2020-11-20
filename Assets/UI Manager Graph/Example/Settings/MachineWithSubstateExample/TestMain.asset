@@ -20,7 +20,7 @@ MonoBehaviour:
       stateNamespace: Com.Github.Knose1.Flow.Example.SubClass
       stateClass: TestSubMachine
     exitNode:
-    - position: {x: 582, y: 247}
+    - position: {x: 633, y: 236}
       _isNotNull: 1
       exitType: 0
     stateNodes:
@@ -52,14 +52,14 @@ MonoBehaviour:
         nodeId: 0
         portId: 0
     - input:
-        nodeId: 1
-        portId: 0
-      output:
-        nodeId: 3
-        portId: 1
-    - input:
         nodeId: 3
         portId: 0
       output:
         nodeId: 2
+        portId: 1
+    - input:
+        nodeId: 1
+        portId: 0
+      output:
+        nodeId: 3
         portId: 1
