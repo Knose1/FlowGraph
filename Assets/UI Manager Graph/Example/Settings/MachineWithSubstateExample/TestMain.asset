@@ -1,0 +1,65 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 514937b7f687f3b4996934d27f571918, type: 3}
+  m_Name: TestMain
+  m_EditorClassIdentifier: 
+  parents: []
+  nodes:
+    entryNode:
+      position: {x: -219, y: 103}
+      _isNotNull: 1
+      stateNamespace: Com.Github.Knose1.Flow.Example.SubClass
+      stateClass: TestSubMachine
+    exitNode:
+    - position: {x: 633, y: 236}
+      _isNotNull: 1
+      exitType: 0
+    stateNodes:
+    - position: {x: 169, y: 76}
+      _isNotNull: 1
+      name: OwO
+      executionMode: 4
+      stateNamespace: 
+      stateClass: 
+      generateEvent: 0
+      ports: []
+      subState: {fileID: 11400000, guid: 57ded1b84bf2b874983c58a3d5a7ad3c, type: 2}
+    - position: {x: 168, y: 216}
+      _isNotNull: 1
+      name: Hello
+      executionMode: 4
+      stateNamespace: 
+      stateClass: 
+      generateEvent: 0
+      ports: []
+      subState: {fileID: 11400000, guid: f471a4e92fd9f954a802463bb3070204, type: 2}
+    reroutes: []
+    subStates: []
+    connections:
+    - input:
+        nodeId: 2
+        portId: 0
+      output:
+        nodeId: 0
+        portId: 0
+    - input:
+        nodeId: 3
+        portId: 0
+      output:
+        nodeId: 2
+        portId: 1
+    - input:
+        nodeId: 1
+        portId: 0
+      output:
+        nodeId: 3
+        portId: 1

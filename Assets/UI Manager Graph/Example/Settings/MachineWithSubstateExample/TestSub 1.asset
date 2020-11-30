@@ -1,0 +1,57 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 514937b7f687f3b4996934d27f571918, type: 3}
+  m_Name: TestSub 1
+  m_EditorClassIdentifier: 
+  parents:
+  - {fileID: 11400000, guid: ff4c90430f7e25f4c99dfce2a5e0d4c8, type: 2}
+  - {fileID: 11400000, guid: 57ded1b84bf2b874983c58a3d5a7ad3c, type: 2}
+  - {fileID: 11400000, guid: ff4c90430f7e25f4c99dfce2a5e0d4c8, type: 2}
+  - {fileID: 11400000, guid: ff4c90430f7e25f4c99dfce2a5e0d4c8, type: 2}
+  nodes:
+    entryNode:
+      position: {x: 100, y: 200}
+      _isNotNull: 1
+      stateNamespace: Sub
+      stateClass: OtherSub
+    exitNode:
+    - position: {x: 1112, y: 215}
+      _isNotNull: 1
+      exitType: 1
+    stateNodes:
+    - position: {x: 539, y: 176}
+      _isNotNull: 1
+      name: Debug
+      executionMode: 1
+      stateNamespace: Com.Github.Knose1.Flow.Example.SubClass
+      stateClass: DebugSubClass
+      generateEvent: 0
+      ports:
+      - id: 1
+        trigger: 
+        createThread: 0
+      subState: {fileID: 0}
+    reroutes: []
+    subStates: []
+    connections:
+    - input:
+        nodeId: 2
+        portId: 0
+      output:
+        nodeId: 0
+        portId: 0
+    - input:
+        nodeId: 1
+        portId: 0
+      output:
+        nodeId: 2
+        portId: 1

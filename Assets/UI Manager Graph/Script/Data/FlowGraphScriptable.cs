@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Text.RegularExpressions;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Com.Github.Knose1.Flow.Engine.Settings
 {
@@ -33,10 +34,11 @@ namespace Com.Github.Knose1.Flow.Engine.Settings
 		public const string DEBUG_PREFIX = "["+nameof(NodeDataList)+"]";
 		private const string CHECK_NAME_REGEX = "(^\\d|\\n| |\\W)";
 
-		public EntryNodeData entryNode;
-		public List<ExitNodeData> exitNode;
-		public List<StateNodeData> stateNodes;
-		public List<RerouteData> reroute;
+		[SerializeField] public EntryNodeData entryNode;
+		[SerializeField] public List<ExitNodeData> exitNode;
+		[SerializeField] public List<StateNodeData> stateNodes;
+		[SerializeField, FormerlySerializedAs("reroute")] public List<RerouteData> reroutes;
+		[SerializeField] public List<FlowGraphScriptable> subStates;
 		/* Condition Nodes are deprecated */
 		[NonSerialized] public List<ConditionNodeData> conditionNodes;
 
@@ -45,6 +47,7 @@ namespace Com.Github.Knose1.Flow.Engine.Settings
 		/// </summary>
 		public List<ConnectorData> connections;
 		
+		private float lastTimeChecked = 0;
 		private bool isDataAdded = true;
 		private List<NodeData.NodeData> lastNodes;
 
@@ -53,15 +56,41 @@ namespace Com.Github.Knose1.Flow.Engine.Settings
 			ClearAllDatas();
 		}
 
-		public NodeDataList(EntryNodeData entryNode, List<ExitNodeData> exitNode, List<StateNodeData> stateNodes, List<ConditionNodeData> conditionNodes, List<RerouteData> reroute, List<ConnectorData> connections)
+		public NodeDataList(EntryNodeData entryNode, List<ExitNodeData> exitNode, List<StateNodeData> stateNodes, List<ConditionNodeData> conditionNodes, List<RerouteData> reroutes, List<ConnectorData> connections)
 		{
 			this.entryNode = entryNode;
 			this.exitNode = exitNode;
 			this.stateNodes = stateNodes;
 			this.conditionNodes = conditionNodes;
-			this.reroute = reroute;
+			this.reroutes = reroutes;
 
 			this.connections = connections;
+		}
+
+		private void AskForReloadList(List<FlowGraphScriptable> not)
+		{
+			lastTimeChecked = 0;
+			isDataAdded = true;
+
+			List<FlowGraphScriptable> seen = new List<FlowGraphScriptable>();
+			List<StateNodeData> stateNodes = new List<StateNodeData>(this.stateNodes);
+			foreach (var item in stateNodes)
+			{
+				if (item.executionMode == StateNodeData.Execution.SubState)
+				{
+					FlowGraphScriptable subState = item.subState;
+					if (subState != null)
+					{
+						if (not.Contains(subState)) continue;
+						subState.nodes.AskForReloadList(seen);
+					}
+					
+				}
+			}
+		}
+		public void AskForReloadList()
+		{
+			AskForReloadList(new List<FlowGraphScriptable>());
 		}
 
 		/// <summary>
@@ -75,16 +104,16 @@ namespace Com.Github.Knose1.Flow.Engine.Settings
 			List<string> namespaceToCheck = new List<string>();
 			List<string> classToCheck = new List<string>();
 			
-			namespaceToCheck.Add(entryNode.@namespace);
-			classToCheck.Add(entryNode.@class);
+			namespaceToCheck.Add(entryNode.stateNamespace);
+			classToCheck.Add(entryNode.stateClass);
 			
 			for (int i = stateNodes.Count - 1; i >= 0; i--)
 			{
 				StateNodeData stateNode = stateNodes[i];
 				if (stateNode.executionMode == StateNodeData.Execution.Constructor)
 				{
-					namespaceToCheck.Add(stateNode.@namespace);
-					classToCheck.Add(stateNode.@class);
+					namespaceToCheck.Add(stateNode.stateNamespace);
+					classToCheck.Add(stateNode.stateClass);
 				}
 			}
 
@@ -151,9 +180,21 @@ namespace Com.Github.Knose1.Flow.Engine.Settings
 			exitNode = new List<ExitNodeData>();
 			stateNodes = new List<StateNodeData>();
 			conditionNodes = new List<ConditionNodeData>();
-			reroute = new List<RerouteData>();
+			reroutes = new List<RerouteData>();
 
 			connections = new List<ConnectorData>();
+		}
+
+		public ConnectorData FindInputNode(NodeData.NodeData nodeData, int inputPortId)
+		{
+			List<ConnectorData> connectors = FindInputNode(nodeData);
+			for (int i = connectors.Count - 1; i >= 0; i--)
+			{
+				ConnectorData connector = connectors[i];
+				if (connector.input.portId == inputPortId) return connector;
+			}
+
+			return null;
 		}
 
 		public List<ConnectorData> FindInputNode(NodeData.NodeData nodeData)
@@ -169,7 +210,6 @@ namespace Com.Github.Knose1.Flow.Engine.Settings
 
 			return toRet;
 		}
-
 		public List<ConnectorData> FindOutputNode(NodeData.NodeData nodeData)
 		{
 			List<ConnectorData> connections = this.connections;
@@ -182,6 +222,17 @@ namespace Com.Github.Knose1.Flow.Engine.Settings
 			}
 
 			return toRet;
+		}
+		public ConnectorData FindOutputNode(NodeData.NodeData nodeData, int outputPortId)
+		{
+			List<ConnectorData> connectors = FindOutputNode(nodeData);
+			for (int i = connectors.Count - 1; i >= 0; i--)
+			{
+				ConnectorData connector = connectors[i];
+				if (connector.output.portId == outputPortId) return connector;
+			}
+
+			return null;
 		}
 
 		public List<ConnectorData> FindOutputNode(NodeData.StateNodeData nodeData, StateNodeData.StateNodePort port)
@@ -230,9 +281,9 @@ namespace Com.Github.Knose1.Flow.Engine.Settings
 				nodes.Add(new NodeAndIndex(i, conditionNodes[i].GetType(), conditionNodes[i].position));
 			}
 
-			for (int i = 0; i < reroute.Count; i++)
+			for (int i = 0; i < reroutes.Count; i++)
 			{
-				nodes.Add(new NodeAndIndex(i, reroute[i].GetType(), reroute[i].position));
+				nodes.Add(new NodeAndIndex(i, reroutes[i].GetType(), reroutes[i].position));
 			}
 		}
 
@@ -244,18 +295,23 @@ namespace Com.Github.Knose1.Flow.Engine.Settings
 		/// <param name="nodes"></param>
 		public void GetNodes(out List<NodeData.NodeData> nodes)
 		{
+			float time = Time.time;
+			isDataAdded = isDataAdded || (time - lastTimeChecked) > 0.5f;
+
 			if (!isDataAdded)
 			{
 				nodes = lastNodes;
 				return;
 			}
 
+			lastTimeChecked = time;
+
 			nodes = new List<NodeData.NodeData>();
 			nodes.Add(entryNode);
 			nodes.AddRange(exitNode);
 			nodes.AddRange(stateNodes);
 			nodes.AddRange(conditionNodes);
-			nodes.AddRange(reroute);
+			nodes.AddRange(reroutes);
 
 			lastNodes = nodes = nodes.FindAll((NodeData.NodeData d) => { return d != null && d.IsNotNull; });
 
@@ -281,7 +337,7 @@ namespace Com.Github.Knose1.Flow.Engine.Settings
 				conditionNodes.Add(nodeData as ConditionNodeData);
 
 			else if (nodeData is RerouteData)
-				reroute.Add(nodeData as RerouteData);
+				reroutes.Add(nodeData as RerouteData);
 
 			isDataAdded = true;
 		}
@@ -305,7 +361,7 @@ namespace Com.Github.Knose1.Flow.Engine.Settings
 				conditionNodes.Insert(0, nodeData as ConditionNodeData);
 
 			else if (nodeData is RerouteData)
-				reroute.Insert(0, nodeData as RerouteData);
+				reroutes.Insert(0, nodeData as RerouteData);
 		}
 
 		/// <summary>
@@ -344,7 +400,6 @@ namespace Com.Github.Knose1.Flow.Engine.Settings
 
 			return new ConnectorData(new ConnectedPortData(nodes.IndexOf(input), inputPortId), new ConnectedPortData(nodes.IndexOf(output), outputPortId));
 		}
-
 	}
 
 	[CreateAssetMenu(
@@ -354,6 +409,29 @@ namespace Com.Github.Knose1.Flow.Engine.Settings
 	)]
 	public class FlowGraphScriptable : ScriptableObject
 	{
+		public List<FlowGraphScriptable> ParentHierachyToList()
+		{
+			//1 list = 1 hierachy
+			List<FlowGraphScriptable> lasthierarchy = new List<FlowGraphScriptable>(parents);
+			List<FlowGraphScriptable> toReturn = new List<FlowGraphScriptable>();
+			while (lasthierarchy.Count != 0)
+			{
+				List<FlowGraphScriptable> hierarchy = lasthierarchy;
+				lasthierarchy = new List<FlowGraphScriptable>();
+
+				foreach (var parent in hierarchy)
+				{
+					if (toReturn.Contains(parent)) continue;
+
+					toReturn.Add(parent);
+					if (parent.parents.Count > 0) lasthierarchy.AddRange(parent.parents);
+				}
+			}
+
+			return toReturn;
+		}
+
+		[SerializeField] public List<FlowGraphScriptable> parents = new List<FlowGraphScriptable>();
 		[SerializeField] public NodeDataList nodes = new NodeDataList();
 
 		public EntryNodeData EntryNode
@@ -380,14 +458,17 @@ namespace Com.Github.Knose1.Flow.Engine.Settings
 			set => nodes.connections = value;
 		}
 
+		public void AskForReloadList() => nodes.AskForReloadList();
 		public void ClearAllDatas() => nodes.ClearAllDatas();
 		public void GetNodes(out List<NodeDataList.NodeAndIndex> nodes) => this.nodes.GetNodes(out nodes);
 
 		public void AddNode(NodeData.NodeData nodeData) => nodes.AddNode(nodeData);
 		public void UnshiftNode(NodeData.NodeData nodeData) => nodes.UnshiftNode(nodeData);
 		public bool IsConnectionRegistered(ConnectorData connectorData) => nodes.IsConnectionRegistered(connectorData);
-		public ConnectorData GetConnectorData(NodeData.NodeData input, int inputPortId, NodeData.NodeData output, int outputPortId) => nodes.AddConnector(input, inputPortId, output, outputPortId);
+		public ConnectorData AddConnector(NodeData.NodeData input, int inputPortId, NodeData.NodeData output, int outputPortId) => nodes.AddConnector(input, inputPortId, output, outputPortId);
 	}
+
+	//IDEA : Add FlowGraphScriptable Variant |or| Add FlowGraphScriptable parameters
 }
 
 namespace Com.Github.Knose1.Flow.Engine.Settings.NodeData
@@ -423,6 +504,11 @@ namespace Com.Github.Knose1.Flow.Engine.Settings.NodeData
 
 		public static bool operator ==(ConnectorData a, ConnectorData b)
 		{
+			if (b is null)
+			{
+				return a is null;
+			}
+
 			return (a.input == b.input && a.output == b.output) || (a.input == b.output && a.output == b.input);
 		}
 
@@ -492,13 +578,13 @@ namespace Com.Github.Knose1.Flow.Engine.Settings.NodeData
 	[Serializable]
 	public class EntryNodeData : NodeData
 	{
-		[SerializeField] public string @namespace;
-		[SerializeField] public string @class;
+		[SerializeField, FormerlySerializedAs("namespace")] public string stateNamespace;
+		[SerializeField, FormerlySerializedAs("class")] public string stateClass;
 
 		public EntryNodeData(Vector2 position, string @namespace, string @class) : base(position)
 		{
-			this.@namespace = @namespace;
-			this.@class = @class;
+			this.stateNamespace = @namespace;
+			this.stateClass = @class;
 		}
 
 		public NodeData GetFirstNode(NodeDataList list)
@@ -510,7 +596,13 @@ namespace Com.Github.Knose1.Flow.Engine.Settings.NodeData
 
 			list.GetNodes(out List<NodeData> nodes);
 
-			return connectorData.input.GetNode(nodes);
+			NodeData node = connectorData.input.GetNode(nodes);
+			if (node is RerouteData)
+			{
+				node = (node as RerouteData).GetNextEffectNode(list);
+			}
+
+			return node;
 		}
 	}
 
@@ -532,24 +624,28 @@ namespace Com.Github.Knose1.Flow.Engine.Settings.NodeData
 		{
 			Instantiate,
 			Constructor,
-			Event
+			Event,
+			Empty,
+			SubState
 		}
 
 		[SerializeField] public string name;
 		[SerializeField] public Execution executionMode;
-		[SerializeField] public string @namespace;
-		[SerializeField] public string @class;
+		[SerializeField, FormerlySerializedAs("namespace")] public string stateNamespace;
+		[SerializeField, FormerlySerializedAs("class")] public string stateClass;
 		[SerializeField] public bool generateEvent;
 		[SerializeField] public List<StateNodePort> ports;
+		[SerializeField] public FlowGraphScriptable subState;
 
-		public StateNodeData(Vector2 position, string name, Execution executionMode, string @namespace, string @class, bool generateEvent, List<StateNodePort> ports) : base(position)
+		public StateNodeData(Vector2 position, string name, Execution executionMode, string @namespace, string @class, bool generateEvent, List<StateNodePort> ports, FlowGraphScriptable subState) : base(position)
 		{
 			this.name = name;
 			this.executionMode = executionMode;
-			this.@namespace = @namespace;
-			this.@class = @class;
+			this.stateNamespace = @namespace;
+			this.stateClass = @class;
 			this.generateEvent = generateEvent;
 			this.ports = ports;
+			this.subState = subState;
 		}
 
 		public StateNodePort ConnectionToStateNodePort(ConnectedPortData connectedPortData)
@@ -566,17 +662,26 @@ namespace Com.Github.Knose1.Flow.Engine.Settings.NodeData
 		[Serializable]
 		public class StateNodePort
 		{
+			[SerializeField] public int id;
 			[SerializeField] public string trigger = "";
 			[SerializeField] public bool createThread = false;
-			[SerializeField] public int id;
 		}
 	}
 
 	[Serializable]
 	public class ExitNodeData : NodeData
 	{
-		public ExitNodeData(Vector2 position) : base(position)
+		public enum ExitType
 		{
+			StopThread,
+			StopMachine
+		}
+		
+		[SerializeField] public ExitType exitType;
+
+		public ExitNodeData(Vector2 position, ExitType exitType) : base(position)
+		{
+			this.exitType = exitType;
 		}
 	}
 

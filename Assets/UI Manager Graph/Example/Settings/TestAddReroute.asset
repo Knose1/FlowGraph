@@ -1,0 +1,156 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 514937b7f687f3b4996934d27f571918, type: 3}
+  m_Name: TestAddReroute
+  m_EditorClassIdentifier: 
+  parents: []
+  nodes:
+    entryNode:
+      position: {x: 100, y: 200}
+      _isNotNull: 1
+      stateNamespace: Hello
+      stateClass: 
+    exitNode: []
+    stateNodes:
+    - position: {x: 528, y: 189}
+      _isNotNull: 1
+      name: Hi
+      executionMode: 2
+      stateNamespace: 
+      stateClass: 
+      generateEvent: 0
+      ports:
+      - trigger: 
+        createThread: 0
+        id: 1
+      subState: {fileID: 0}
+    - position: {x: 1112, y: 250}
+      _isNotNull: 1
+      name: OwO
+      executionMode: 2
+      stateNamespace: 
+      stateClass: 
+      generateEvent: 0
+      ports:
+      - trigger: 
+        createThread: 0
+        id: 1
+      - trigger: 
+        createThread: 0
+        id: 2
+      - trigger: 
+        createThread: 0
+        id: 3
+      - trigger: 
+        createThread: 0
+        id: 4
+      - trigger: 
+        createThread: 0
+        id: 5
+      subState: {fileID: 0}
+    - position: {x: 1796, y: 326}
+      _isNotNull: 1
+      name: State
+      executionMode: 3
+      stateNamespace: 
+      stateClass: 
+      generateEvent: 0
+      ports: []
+      subState: {fileID: 0}
+    - position: {x: 1795, y: 435}
+      _isNotNull: 1
+      name: State
+      executionMode: 1
+      stateNamespace: 
+      stateClass: 
+      generateEvent: 0
+      ports: []
+      subState: {fileID: 0}
+    - position: {x: 1803, y: 581}
+      _isNotNull: 1
+      name: State
+      executionMode: 4
+      stateNamespace: 
+      stateClass: 
+      generateEvent: 0
+      ports: []
+      subState: {fileID: 0}
+    - position: {x: 1812, y: 706}
+      _isNotNull: 1
+      name: State
+      executionMode: 0
+      stateNamespace: 
+      stateClass: 
+      generateEvent: 0
+      ports: []
+      subState: {fileID: 0}
+    reroutes:
+    - position: {x: 1570, y: 76}
+      _isNotNull: 1
+    - position: {x: 434, y: 100}
+      _isNotNull: 1
+    subStates: []
+    connections:
+    - input:
+        nodeId: 1
+        portId: 0
+      output:
+        nodeId: 0
+        portId: 0
+    - input:
+        nodeId: 1
+        portId: 0
+      output:
+        nodeId: 8
+        portId: 1
+    - input:
+        nodeId: 2
+        portId: 0
+      output:
+        nodeId: 1
+        portId: 1
+    - input:
+        nodeId: 7
+        portId: 0
+      output:
+        nodeId: 2
+        portId: 1
+    - input:
+        nodeId: 3
+        portId: 0
+      output:
+        nodeId: 2
+        portId: 2
+    - input:
+        nodeId: 4
+        portId: 0
+      output:
+        nodeId: 2
+        portId: 3
+    - input:
+        nodeId: 5
+        portId: 0
+      output:
+        nodeId: 2
+        portId: 4
+    - input:
+        nodeId: 6
+        portId: 0
+      output:
+        nodeId: 2
+        portId: 5
+    - input:
+        nodeId: 8
+        portId: 0
+      output:
+        nodeId: 7
+        portId: 1

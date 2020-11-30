@@ -1,7 +1,9 @@
-﻿using Com.Github.Knose1.Flow.Engine.Settings.NodeData;
+﻿using Com.Github.Knose1.Common;
+using Com.Github.Knose1.Flow.Engine.Settings.NodeData;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -18,10 +20,12 @@ namespace Com.Github.Knose1.Flow.Editor
 	/// </summary>
 	public abstract class FlowGraphNode : UnityEditor.Experimental.GraphView.Node
 	{
+		protected static void CallOnChange() => OnChange?.Invoke();
 		public static event Action OnChange;
 
 		private const int TITLE_BORDER_TOP_WIDTH = 2;
 
+		public const string CLASS = nameof(FlowGraphNode);
 		protected const string NEXT = "Next";
 		protected const string OUTPUT = "Output";
 		protected const string INPUT = "Input";
@@ -29,6 +33,7 @@ namespace Com.Github.Knose1.Flow.Editor
 		protected VisualElement inspectorElement;
 		private List<Port> _ports = new List<Port>();
 
+		protected static readonly System.Text.RegularExpressions.Regex VarCorrector = new System.Text.RegularExpressions.Regex("(?![a-zA-Z][a-zA-Z0-9]})");
 		/// <summary>
 		/// Node's ports
 		/// </summary>
@@ -38,7 +43,8 @@ namespace Com.Github.Knose1.Flow.Editor
 		protected FlowGraphNode(Vector2 startSize) : base()
 		{
 			SetPosition(new Rect(Vector2.zero, startSize));
-			
+
+			this.AddToClassList(CLASS);
 			capabilities ^= Capabilities.Collapsible;
 
 			inspectorElement = new VisualElement();
@@ -69,31 +75,42 @@ namespace Com.Github.Knose1.Flow.Editor
 			titleContainer.style.borderTopWidth = 0;
 		}
 
-		protected void SetNodeColor(Color color)
+		protected virtual Color GetNodeColor() => elementTypeColor;
+		protected virtual void SetNodeColor(Color color)
 		{
 			titleContainer.style.borderTopColor = color;
 			titleContainer.style.borderTopWidth = TITLE_BORDER_TOP_WIDTH;
 			elementTypeColor = color;
+
+			List<Port> ports = this.GetPorts();
+			foreach (Port item in ports)
+			{
+				item.portColor = color;
+			}
 		}
 
 		public override Port InstantiatePort(Orientation orientation, Direction direction, Port.Capacity capacity, Type type)
 		{
-			return Port.Create<FlowGraphEdge>(orientation, direction, capacity, type);
+			return FlowGraphPort.Create(orientation, direction, capacity, type);
 		}
 
 		protected Port GeneratePort(Direction direction, Port.Capacity capacity = Port.Capacity.Single)
 		{
 			Port port = InstantiatePort(Orientation.Horizontal, direction, capacity, null);
-			port.RegisterCallback<MouseDownEvent>(OnMouseDown);
-			_ports.Add(port);
+			AddPort(port);
 			return port;
 		}
 
 		protected Port GeneratePort<T>(Direction direction, Port.Capacity capacity = Port.Capacity.Single)
 		{
 			Port port = InstantiatePort(Orientation.Horizontal, direction, capacity, typeof(T));
-			_ports.Add(port);
+			AddPort(port);
 			return port;
+		}
+
+		protected void InsertOutputElement(VisualElement elm, int index)
+		{
+			outputContainer.Insert(index, elm);
 		}
 
 		protected void AddOutputElement(VisualElement elm)
@@ -107,6 +124,11 @@ namespace Com.Github.Knose1.Flow.Editor
 			outputContainer.Remove(elm);
 		}
 
+		protected void InsertInputElement(VisualElement elm, int index)
+		{
+			inputContainer.Insert(index, elm);
+		}
+
 		protected void AddInputElement(VisualElement elm)
 		{
 			inputContainer.Add(elm);
@@ -117,7 +139,19 @@ namespace Com.Github.Knose1.Flow.Editor
 			inputContainer.Remove(elm);
 		}
 
-		protected void RemovePort(Port port)
+		protected void InsertPort(Port port, int index)
+		{
+			port.RegisterCallback<MouseDownEvent>(OnMouseDown);
+			_ports.Insert(index, port);
+		}
+
+		protected void AddPort(Port port)
+		{
+			port.RegisterCallback<MouseDownEvent>(OnMouseDown);
+			_ports.Add(port);
+		}
+
+		protected void RemovePort(Port port, bool callChange = true)
 		{
 			_ports.Remove(port);
 			port.UnregisterCallback<MouseDownEvent>(OnMouseDown);
@@ -127,11 +161,12 @@ namespace Com.Github.Knose1.Flow.Editor
 			for (int i = connections.Count - 1; i >= 0; i--)
 			{
 				Edge edge = connections[i];
-				port.Disconnect(edge);
+				edge.input.Disconnect(edge);
+				edge.output.Disconnect(edge);
 				edge.RemoveFromHierarchy();
 			}
 
-			OnChange?.Invoke();
+			if (callChange) OnChange?.Invoke();
 		}
 
 		protected void AddInspectorElement(VisualElement elm)
@@ -161,13 +196,36 @@ namespace Com.Github.Knose1.Flow.Editor
 		protected virtual void SetupPorts()	 { }
 		protected virtual void SetupFields() { }
 
-		protected void RegisterField<T>(BaseField<T> field)
+		protected static void RegisterField<T>(BaseField<T> field)
 		{
 			field.RegisterValueChangedCallback(Field_OnValueChanged);
 		}
-
-		private void Field_OnValueChanged<T>(ChangeEvent<T> evt)
+		protected static void RegisterField(BaseField<string> field, Regex valueCorrector, bool forceCase = false, bool startWithHigherCase = true)
 		{
+			void LCallback(ChangeEvent<string> evt)
+			{
+				string value = valueCorrector.Replace(evt.newValue, "");
+
+				if (forceCase)
+				{
+					if (startWithHigherCase)
+						value = value.ToUpperCamelCase();
+					else
+						value = value.ToLowerCamelCase();
+				}
+
+				(evt.target as BaseField<string>).value = value;
+				
+				if (value == evt.previousValue) return; 
+				Field_OnValueChanged(evt);
+			}
+
+			field.RegisterValueChangedCallback(LCallback);
+		}
+
+		private static void Field_OnValueChanged<T>(ChangeEvent<T> evt)
+		{
+			if (Equals(evt.newValue, evt.previousValue)) return;
 			OnChange?.Invoke();
 		}
 
@@ -217,7 +275,7 @@ namespace Com.Github.Knose1.Flow.Editor
 
 		public static void CorrectToggle(VisualElement elm)
 		{
-			elm.style.marginBottom = 2;
+			elm.style.marginBottom = 3;
 		}
 
 		/// <summary>

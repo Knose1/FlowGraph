@@ -15,13 +15,21 @@ namespace Com.Github.Knose1.Flow.Engine.Machine.State
 	/// </summary>
 	public class MachineState
 	{
+		private Thread _thread;
+		public Thread Thread => _thread;
+		public readonly string name;
 		public List<TriggerData> triggers = new List<TriggerData>();
+
 		public event Action<Thread> OnStart;
 
-		public MachineState() { }
+		public MachineState(string name)
+		{
+			this.name = name;
+		}
 
 		public virtual void Start(Thread thread)
 		{
+			_thread = thread;
 			OnStart?.Invoke(thread);
 		}
 		public virtual void Update(Thread thread)
@@ -44,10 +52,10 @@ namespace Com.Github.Knose1.Flow.Engine.Machine.State
 	/// <summary>
 	/// A state for <see cref="IState"/> classes
 	/// </summary>
-	public class ClassMachineState : MachineState
+	public class ClassMachineStateBase<T> : MachineState where T : IState
 	{
-		public IState target;
-		public ClassMachineState(IState target)
+		public T target;
+		public ClassMachineStateBase(string name, T target) : base(name)
 		{
 			this.target = target;
 		}
@@ -70,13 +78,20 @@ namespace Com.Github.Knose1.Flow.Engine.Machine.State
 			base.End(thread);
 			(target as IStateEnd)?.OnEnd(thread);
 		}
+	}
 
+	/// <summary>
+	/// A state for <see cref="IState"/> classes
+	/// </summary>
+	public class ClassMachineState : ClassMachineStateBase<IState>
+	{
+		public ClassMachineState(string name, IState target) : base(name, target) {}
 	}
 
 	public class GameObjectMachineState : MachineState
 	{
 		public GameObject target;
-		public GameObjectMachineState(GameObject target)
+		public GameObjectMachineState(string name, GameObject target) : base(name)
 		{
 			this.target = target;
 		}
@@ -113,6 +128,22 @@ namespace Com.Github.Knose1.Flow.Engine.Machine.State
 			{
 				item.OnEnd(thread);
 			}
+		}
+	}
+
+	public class SubstateMachine : ClassMachineStateBase<StateMachine.Machine>
+	{
+		public MachineState nextMachine;
+
+		public SubstateMachine(string name, StateMachine.Machine machine) : base(name, machine)
+		{
+			machine.OnMachineStop += Machine_OnMachineStop;
+		}
+
+		private void Machine_OnMachineStop()
+		{
+			target.OnMachineStop -= Machine_OnMachineStop;
+			if (nextMachine != null) Thread.SetState(nextMachine);
 		}
 	}
 }

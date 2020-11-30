@@ -1,24 +1,45 @@
 ﻿{
+	"EmptyState": {
+		"FIELD_NAME_SUFFIX": "",
+		"STATE_NAME_SUFFIX": "State",
+		"STATES": "protected MachineState #{L_STATE_NAME}#;",
+		"CREATE_STATES": "#{L_STATE_NAME}# = new MachineState(\"#{H_STATE_NAME}#\");"
+	},
 	"EventState": {
+		"FIELD_NAME_SUFFIX": "",
+		"STATE_NAME_SUFFIX": "State",
 		"EVENTS": "public event Action On#{H_STATE_NAME}#;",
-		"STATES": "protected MachineState #{L_STATE_NAME}#State;",
-		"CREATE_STATES": "#{L_STATE_NAME}#State = new MachineState();"
+		"STATES": "protected MachineState #{L_STATE_NAME}#;",
+		"CREATE_STATES": "#{L_STATE_NAME}# = new MachineState(\"#{H_STATE_NAME}#\");"
 	},
 	"GoState": {
+		"FIELD_NAME_SUFFIX": "",
+		"STATE_NAME_SUFFIX": "State",
 		"EVENTS": "public event Action On#{H_STATE_NAME}#;",
-		"GO_FIELDS": "[SerializeField] protected GameObject #{L_STATE_NAME}#;",
-		"STATES": "protected GameObjectMachineState #{L_STATE_NAME}#State;",
-		"CREATE_STATES": "#{L_STATE_NAME}#State = new GameObjectMachineState(#{L_STATE_NAME}#);"
+		"GO_FIELDS": "[SerializeField] protected GameObject #{FIELD_NAME}#;",
+		"STATES": "protected GameObjectMachineState #{L_STATE_NAME}#;",
+		"CREATE_STATES": "#{FIELD_NAME}# = new GameObjectMachineState(\"#{H_STATE_NAME}#\",#{FIELD_NAME}#);"
 	},
 	"ClassMachineState": {
+		"FIELD_NAME_SUFFIX": "",
+		"STATE_NAME_SUFFIX": "State",
 		"EVENTS": "public event Action On#{H_STATE_NAME}#;",
-		"CLASS_FIELDS": "protected #{NAMESPACE}#.#{CLASS}# #{L_STATE_NAME}# = new #{NAMESPACE}#.#{CLASS}#();",
-		"STATES": "protected ClassMachineState #{L_STATE_NAME}#State;",
-		"CREATE_STATES": "#{L_STATE_NAME}#State = new ClassMachineState(#{L_STATE_NAME}#);"
+		"CLASS_FIELDS": "protected #{NAMESPACE}##{CLASS}# #{FIELD_NAME}# = new #{NAMESPACE}##{CLASS}#();",
+		"STATES": "protected ClassMachineState #{L_STATE_NAME}#;",
+		"CREATE_STATES": "#{L_STATE_NAME}# = new ClassMachineState(\"#{H_STATE_NAME}#\",#{FIELD_NAME}#);"
 	},
+	"SubstateMachine": {
+		"FIELD_NAME_SUFFIX": "SubMachine",
+		"STATE_NAME_SUFFIX": "SubState",
+		"SUBSTATE_FIELDS": "protected #{NAMESPACE}##{CLASS}#Machine #{FIELD_NAME}#;",
+		"STATES": "protected SubstateMachine #{L_STATE_NAME}#;",
+		"CREATE_STATES": "#{L_STATE_NAME}# = new SubstateMachine(\"#{H_STATE_NAME}#\", #{FIELD_NAME}# = new #{NAMESPACE}##{CLASS}#Machine((StateMachine)this, (Machine)this));"
+	},
+	"SUB_STATE_NEXT": "#{L_STATE_NAME_0}#.nextMachine = #{L_STATE_NAME_1}#;",
 	"ALLOW_TRIGGERS": "AllowTrigger(\"#{TRIGGER}#\");",
-	"ADD_TRIGGERS": "#{L_STATE_NAME_0}#State.AddTrigger(\"#{TRIGGER}#\",#{L_STATE_NAME_1}#State, #{CREATE_THREAD}#);",
-	"ADD_EVENTS": "#{L_STATE_NAME}#State.OnStart += (Thread thread) => { On#{H_STATE_NAME}#?.Invoke(); };",
-	"ENTRY_STATE": "protected override void EntryPoint(Thread mainThread)\r\n{\r\n\tmainThread.SetState(#{L_STATE_NAME}#State);\r\n}",
-	"END_STATE": "#{L_STATE_NAME}#State.AddTrigger(\"#{TRIGGER}#\", #{END_STATE}#);"
+	"ADD_TRIGGERS": "#{L_STATE_NAME_0}#.AddTrigger(\"#{TRIGGER}#\",#{L_STATE_NAME_1}#, #{CREATE_THREAD}#);",
+	"ADD_EVENTS": "#{L_STATE_NAME}#.OnStart += (Thread thread) => { On#{H_STATE_NAME}#?.Invoke(); };",
+	"ENTRY_STATE": "protected override void EntryPoint(Thread mainThread)\r\n{\r\n\tmainThread.SetState(#{L_STATE_NAME}#);\r\n}",
+	"END_STATE": "#{L_STATE_NAME}#.AddTrigger(\"#{TRIGGER}#\", #{END_STATE}#);",
+	"STOP_STATE": "#{L_STATE_NAME}#.AddTrigger(\"#{TRIGGER}#\", #{STOP_STATE}#);"
 }

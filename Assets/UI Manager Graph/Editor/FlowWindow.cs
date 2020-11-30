@@ -23,14 +23,26 @@ namespace Com.Github.Knose1.Flow.Editor
 		private const string STATE_NODE = "+State Node";
 		private const string REROUTE = "+Reroute";
 		private const string EXIT = "+Exit Node";
-		private const string MINIMAP = "Toggle minimap";
+		private const string MINIMAP = "Toggle Minimap";
+		private const string TRIGGER_LIST = "Toggle Trigger List";
 		private const string SAVE = "Save";
 		
 		protected FlowGraph graph;
 		protected FlowGraphManager manager;
 		private bool isDirty = false;
-		protected ToolbarButton save;
-		private TriggerList listView;
+		protected ToolbarButton saveBtn;
+		
+		private TriggerList triggerList;
+		private int triggerListIndex;
+
+		private ToolbarButton generate;
+		private Toolbar toolbar;
+		private VisualElement parentList;
+		private int generateIndex;
+		private bool isTargetSubMachine = false;
+
+		private StyleSheet styleSheet;
+		private StyleSheet styleSheetColor;
 
 		[MenuItem("Window/Game/Flow")]
 		static public void Open()
@@ -43,26 +55,89 @@ namespace Com.Github.Knose1.Flow.Editor
 		{
 			OnDisable(); //Just In Case
 
-			manager = new FlowGraphManager();
+			string filename = EditorGUIUtility.isProSkin ? FlowGraphAssetDatabase.RESSOURCE_STYLESHEET_BLACK : FlowGraphAssetDatabase.RESSOURCE_STYLESHEET_WHITE;
+			LoadFile(FlowGraphAssetDatabase.RESSOURCE_STYLESHEET, out styleSheet);
+			LoadFile(filename, out styleSheetColor);
+
+			if (manager == null)
+				manager = new FlowGraphManager();
+
 			manager.OnSelectionStatusChange += Manager_OnSelectionStatusChange;
 
 			GenerateGraph();
-			//GenerateTriggerList();
+			GenerateTriggerList();
 			GenerateToolbar();
 
 			manager.OnSaving += Manager_OnSaving;
+
 			manager.Init();
 
 			rootVisualElement.RegisterCallback<KeyDownEvent>(OnKeyDown);
+
+			EditorApplication.playModeStateChanged += EditorApplication_playModeStateChanged;
 		}
 
+		private void EditorApplication_playModeStateChanged(PlayModeStateChange obj)
+		{
+			if (isTargetSubMachine) return;
+
+			switch (obj)
+			{
+				case PlayModeStateChange.EnteredPlayMode:
+					if (generate.parent != null) toolbar.Remove(generate);
+					break;
+				case PlayModeStateChange.EnteredEditMode:
+					if (generate.parent == null) toolbar.Insert(generateIndex, generate);
+					break;
+				default:
+					break;
+			}
+		}
+
+		private void LoadFile(string filename, out StyleSheet styleSheet)
+		{
+			styleSheet = null;
+			try
+			{
+				//Load
+				styleSheet = AssetDatabase.LoadAssetAtPath<StyleSheet>(filename);
+			}
+			catch (Exception e)
+			{
+				Debug.LogError(e);
+				Debug.LogWarning("[" + nameof(FlowGraph) + "] error loading the Stylesheet, filename : " + filename);
+				styleSheet = null;
+				return;
+			}
+			
+			try
+			{
+				rootVisualElement.styleSheets.Add(styleSheet);
+			}
+			catch (Exception e)
+			{
+				Debug.LogError(e);
+				Debug.LogWarning("[" + nameof(FlowGraph) + "] error parsing the Stylesheet, filename : " + filename);
+
+				rootVisualElement.styleSheets.Remove(styleSheet);
+				styleSheet = null;
+				return;
+			}
+		}
 
 		private void OnKeyDown(KeyDownEvent evt)
 		{
 			if (evt.keyCode == KeyCode.S && evt.ctrlKey)
 			{
-				manager.Save();
-			} 
+				ExecuteSave();
+				return;
+			}
+
+			if (evt.keyCode == KeyCode.F11)
+			{
+				maximized = !maximized;
+				graph.Focus();
+			}
 		}
 
 		protected virtual void GenerateGraph()
@@ -80,7 +155,7 @@ namespace Com.Github.Knose1.Flow.Editor
 
 		protected virtual void GenerateToolbar()
 		{
-			Toolbar toolbar = new Toolbar();
+			toolbar = new Toolbar();
 			toolbar.StretchToParentWidth();
 
 			//Button Screen Node
@@ -104,6 +179,12 @@ namespace Com.Github.Knose1.Flow.Editor
 			minimapToggle.text = MINIMAP;
 			toolbar.Add(minimapToggle);
 
+			//Toggle TriggerList
+			ToolbarToggle triggerListToggle = new ToolbarToggle();
+			triggerListToggle.RegisterValueChangedCallback(TriggerListToggleChange);
+			triggerListToggle.text = TRIGGER_LIST;
+			toolbar.Add(triggerListToggle);
+
 			//Middle
 			VisualElement middle = new VisualElement();
 			middle.name = "Middle";
@@ -116,34 +197,61 @@ namespace Com.Github.Knose1.Flow.Editor
 			toolbar.Add(newAsset);
 
 			//Generate
-			ToolbarButton generate  = new ToolbarButton(manager.GenerateCode);
+			generate  = new ToolbarButton(manager.GenerateCode);
 			generate.text = "Generate";
+			generateIndex = toolbar.childCount;
 			toolbar.Add(generate);
 
 			//Save
-			save = new ToolbarButton(() => { manager.Save(); });
-			save.text = SAVE;
-			toolbar.Add(save);
+			saveBtn = new ToolbarButton(ExecuteSave);
+			saveBtn.text = SAVE;
+			toolbar.Add(saveBtn);
 
 			rootVisualElement.Add(toolbar);
 		}
 
 		protected virtual void GenerateTriggerList()
 		{
-			listView = new TriggerList();
-			rootVisualElement.Add(listView);
+			triggerListIndex = rootVisualElement.childCount;
+			triggerList = new TriggerList();
+			//rootVisualElement.Add(triggerList);
 		}
 
 		private void MinimapToggleChange(ChangeEvent<bool> evt)
 		{
 			graph.ToggleMinimap(evt.newValue);
 		}
-		
+
+		private void TriggerListToggleChange(ChangeEvent<bool> evt)
+		{
+			if (evt.newValue)
+			{
+				if (triggerList.parent == null)
+				{
+					rootVisualElement.Insert(triggerListIndex, triggerList);
+					triggerList.UpdateSize();
+				}
+			}
+			else
+			{
+				if (triggerList.parent != null)
+				{
+					rootVisualElement.Remove(triggerList);
+					triggerList.UnSelectItems();
+				}
+			}
+		}
+
 		public void ShowAsDirty()
 		{
-			save.text = "*" + SAVE;
+			saveBtn.text = "*" + SAVE;
 			titleContent.text = "*" + TITLE;
 			manager.ShowAsDirty();
+		}
+
+		private void ExecuteSave()
+		{
+			manager.Save();
 		}
 
 		protected void Manager_OnSaving()
@@ -151,8 +259,34 @@ namespace Com.Github.Knose1.Flow.Editor
 			isDirty = false;
 
 			Debug.Log("[" + nameof(FlowWindow) + "] Saving...");
+			
+			//Get all subState
+			Engine.Settings.FlowGraphScriptable target = manager.Target;
+			var stateNodes = target.StateNodes;
+			foreach (var stateNode in stateNodes)
+			{
+				if (stateNode.executionMode == Engine.Settings.NodeData.StateNodeData.Execution.SubState)
+				{
+					Engine.Settings.FlowGraphScriptable subState = stateNode.subState;
+					if (subState != null)
+						subState.parents.Remove(target);
+				}
+			}
+
 			graph.SaveIn(manager.Target);
-			save.text = SAVE;
+			
+			stateNodes = target.StateNodes;
+			foreach (var stateNode in stateNodes)
+			{
+				if (stateNode.executionMode == Engine.Settings.NodeData.StateNodeData.Execution.SubState)
+				{
+					Engine.Settings.FlowGraphScriptable subState = stateNode.subState;
+					if (subState != null)
+						subState.parents.Add(target);
+				}
+			}
+
+			saveBtn.text = SAVE;
 			titleContent.text = TITLE;
 			Debug.Log("[" + nameof(FlowWindow) + "] Saved !");
 		}
@@ -160,12 +294,24 @@ namespace Com.Github.Knose1.Flow.Editor
 		private void Manager_OnSelectionStatusChange(FlowGraphManager.Status status)
 		{
 			isDirty = false;
-			save.text = SAVE;
+			saveBtn.text = SAVE;
 			titleContent.text = TITLE;
 
 			switch (status)
 			{
 				case FlowGraphManager.Status.NoProblem:
+					manager.Target.AskForReloadList();
+					isTargetSubMachine = manager.Target.parents.Count > 0;
+					
+					if (isTargetSubMachine)
+					{
+						if (generate.parent != null) toolbar.Remove(generate);
+					}
+					else
+					{
+						if (generate.parent == null) toolbar.Insert(generateIndex, generate);
+					}
+
 					break;
 				case FlowGraphManager.Status.MultipleEdit:
 					break;
@@ -206,6 +352,9 @@ namespace Com.Github.Knose1.Flow.Editor
 
 		public void OnDisable()
 		{
+			if (styleSheet) rootVisualElement.styleSheets.Remove(styleSheet);
+			if (styleSheetColor) rootVisualElement.styleSheets.Remove(styleSheetColor);
+
 			if (manager != null) manager.OnSelectionStatusChange -= Manager_OnSelectionStatusChange;
 
 			if (graph != null) rootVisualElement.Remove(graph);
@@ -213,6 +362,8 @@ namespace Com.Github.Knose1.Flow.Editor
 			if (graph != null) graph.Dispose();
 			if (manager != null) manager.Dispose();
 
+
+			EditorApplication.playModeStateChanged -= EditorApplication_playModeStateChanged;
 
 			rootVisualElement.UnregisterCallback<KeyDownEvent>(OnKeyDown);
 		}

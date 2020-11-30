@@ -9,11 +9,23 @@ namespace Com.Github.Knose1.Flow.Editor.Node
 {
 	public class EntryNode : FlowGraphNode, IUnique
 	{
-		protected const string ENTRY = "Entry";
-
+		private const string ENTRY = "Entry";
+		protected const string TITLE_STATE_MACHINE = "State Machine "+ENTRY;
+		private const string TITLE_SUBSTATE_MACHINE = "SubState Machine "+ENTRY;
+		private const string NAMESPACE = "Namespace";
+		private const string RELATIVE_NAMESPACE = "Relative "+NAMESPACE;
 		private TextElement generatedClassTextElement;
 
 		private TextField namespaceField;
+
+		public void SetSubState()
+		{
+			title = TITLE_SUBSTATE_MACHINE;
+			string value = Namespace;
+			namespaceField.label = RELATIVE_NAMESPACE;
+			Namespace = value;
+		}
+
 		public string Namespace
 		{
 			get => namespaceField.value;
@@ -29,7 +41,7 @@ namespace Com.Github.Knose1.Flow.Editor.Node
 
 		public EntryNode() : base()
 		{
-			title = ENTRY;
+			title = TITLE_STATE_MACHINE;
 			capabilities ^= Capabilities.Deletable;
 			SetNodeColor(Color.red);
 		}
@@ -51,12 +63,12 @@ namespace Com.Github.Knose1.Flow.Editor.Node
 			AddInspectorElement(generatedClassTextElement);
 
 			//Namespace field
-			namespaceField = new TextField("Namespace");
+			namespaceField = new TextField(NAMESPACE);
 			namespaceField.tooltip = "The namespace of the class";
 			UIManagerGraphNodeExtend.CorrectLabel(namespaceField.labelElement);
 			namespaceField.style.width = 250;
 			UIManagerGraphNodeExtend.Indent(namespaceField);
-			RegisterField(namespaceField);
+			RegisterField(namespaceField, VarCorrector);
 			AddInspectorElement(namespaceField);
 
 			//Class field
@@ -65,7 +77,7 @@ namespace Com.Github.Knose1.Flow.Editor.Node
 			UIManagerGraphNodeExtend.CorrectLabel(classField.labelElement);
 			classField.style.width = 160;
 			UIManagerGraphNodeExtend.Indent(classField);
-			RegisterField(classField);
+			RegisterField(classField, VarCorrector);
 			AddInspectorElement(classField);
 		}
 
@@ -77,8 +89,8 @@ namespace Com.Github.Knose1.Flow.Editor.Node
 		public static EntryNode FromData(EntryNodeData data)
 		{
 			EntryNode node = new EntryNode();
-			node.Class = data.@class;
-			node.Namespace = data.@namespace;
+			node.Class = data.stateClass;
+			node.Namespace = data.stateNamespace;
 			return node;
 		}
 	}
